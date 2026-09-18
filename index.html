@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Duende — O Vale Esquecido</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07130d;font-family:system-ui,Arial}
+canvas{display:block;width:100%;height:100%;image-rendering:auto}
+#hud{position:fixed;inset:0;pointer-events:none;color:white}
+.panel{position:absolute;top:14px;left:14px;background:rgba(5,20,13,.78);border:2px solid rgba(255,255,255,.22);border-radius:14px;padding:10px 14px;backdrop-filter:blur(4px)}
+#title{font-weight:800;font-size:18px}.small{font-size:12px;opacity:.82;margin-top:3px}
+#quest{position:absolute;top:14px;right:14px;max-width:310px;text-align:right;background:rgba(5,20,13,.7);border-radius:14px;padding:10px 14px;border:1px solid rgba(255,255,255,.18)}
+#msg{position:absolute;left:50%;bottom:25px;transform:translateX(-50%);min-width:240px;max-width:80%;text-align:center;background:rgba(5,20,13,.86);border:2px solid rgba(255,255,255,.18);border-radius:14px;padding:11px 15px;opacity:0;transition:.2s}
+#touch{display:none;position:fixed;bottom:18px;left:18px;right:18px;justify-content:space-between;pointer-events:none}
+.pad{display:grid;grid-template-columns:58px 58px 58px;grid-template-rows:58px 58px 58px;gap:6px;pointer-events:auto}
+.btn{border:1px solid rgba(255,255,255,.25);background:rgba(10,25,16,.72);color:#fff;border-radius:14px;font-size:24px;touch-action:none}
+.up{grid-column:2}.left{grid-column:1;grid-row:2}.down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}
+#action{pointer-events:auto;width:90px;height:90px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(80,45,20,.8);color:#fff;font-weight:800;touch-action:none}
+@media (max-width:800px),(pointer:coarse){#touch{display:flex}.panel{font-size:12px}.panel .small{font-size:10px}#quest{max-width:220px;font-size:12px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div class="panel"><div id="title">🍃 O VALE ESQUECIDO</div><div class="small">WASD / setas para explorar · E para interagir</div><div class="small" id="stats">Cristais: 0/8 · Vida: ♥♥♥</div></div>
+  <div id="quest">MISSÃO<br><b>Encontre os 8 cristais mágicos.</b><div class="small">Explore a floresta e converse com o Guardião.</div></div>
+  <div id="msg"></div>
+</div>
+<div id="touch">
+  <div class="pad">
+    <button class="btn up" data-k="ArrowUp">▲</button><button class="btn left" data-k="ArrowLeft">◀</button>
+    <button class="btn down" data-k="ArrowDown">▼</button><button class="btn right" data-k="ArrowRight">▶</button>
+  </div>
+  <button id="action">E</button>
+</div>
+<script>
+const c=document.getElementById('game'),ctx=c.getContext('2d');
+let W,H,dpr,scale=1;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+
+const keys={}; addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E') interact();});
+addEventListener('keyup',e=>keys[e.key]=false);
+document.querySelectorAll('.btn').forEach(b=>{
+  const k=b.dataset.k;
+  b.onpointerdown=e=>{e.preventDefault();keys[k]=true};
+  b.onpointerup=b.onpointercancel=b.onpointerleave=e=>{keys[k]=false};
+});
+document.getElementById('action').onpointerdown=e=>{e.preventDefault();interact()};
+
+const world={w:3000,h:2100};
+const p={x:1450,y:1050,r:25,speed:4.2,hp:3};
+let crystals=[],trees=[],rocks=[],flowers=[],enemies=[],npc={x:1530,y:960};
+let collected=0,toastTimer=0,day=0;
+
+function rand(a,b){return Math.random()*(b-a)+a}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function blocked(x,y){
+  for(const t of trees) if(Math.hypot(x-t.x,y-t.y)<t.r+20) return true;
+  for(const r of rocks) if(Math.hypot(x-r.x,y-r.y)<r.r+18) return true;
+  return x<30||y<30||x>world.w-30||y>world.h-30;
+}
+function addForest(){
+  for(let i=0;i<145;i++){
+    let x=rand(60,world.w-60),y=rand(60,world.h-60);
+    if(Math.hypot(x-p.x,y-p.y)<250) {i--;continue}
+    trees.push({x,y,r:rand(24,39),s:rand(.8,1.25)});
+  }
+  for(let i=0;i<65;i++) rocks.push({x:rand(50,world.w-50),y:rand(50,world.h-50),r:rand(9,18)});
+  for(let i=0;i<170;i++) flowers.push({x:rand(40,world.w-40),y:rand(40,world.h-40),r:rand(2,4)});
+  const pts=[[720,420],[2340,430],[560,1560],[2480,1510],[1110,720],[2050,1120],[1750,1760],[2700,980]];
+  pts.forEach((q,i)=>crystals.push({x:q[0],y:q[1],got:false,phase:i*.8}));
+  enemies=[{x:880,y:980,r:20,dx:1},{x:2200,y:760,r:20,dx:-1},{x:1920,y:1480,r:20,dx:1}];
+}
+addForest();
+
+const img=new Image();img.src='duende.png';
+function cam(){return {x:Math.max(0,Math.min(world.w-W,p.x-W/2)),y:Math.max(0,Math.min(world.h-H,p.y-H/2))}}
+function move(){
+  let dx=(keys.ArrowRight||keys.d||keys.D?1:0)-(keys.ArrowLeft||keys.a||keys.A?1:0);
+  let dy=(keys.ArrowDown||keys.s||keys.S?1:0)-(keys.ArrowUp||keys.w||keys.W?1:0);
+  if(dx||dy){let n=Math.hypot(dx,dy);dx/=n;dy/=n;
+    let nx=p.x+dx*p.speed,ny=p.y+dy*p.speed;
+    if(!blocked(nx,p.y))p.x=nx;if(!blocked(p.x,ny))p.y=ny;
+  }
+}
+function interact(){
+  const near=crystals.find(o=>!o.got&&dist(p,o)<70);
+  if(near){near.got=true;collected++;say('Você encontrou um cristal mágico! ✨');updateHud();return}
+  if(dist(p,npc)<100){say(collected<8?'Guardião: A floresta perdeu seus 8 cristais. Explore cada canto!':'Guardião: Você restaurou o coração do vale! A aventura continua...');}
+}
+function say(t){const m=document.getElementById('msg');m.textContent=t;m.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>m.style.opacity=0,3000)}
+function updateHud(){document.getElementById('stats').textContent=`Cristais: ${collected}/8 · Vida: ${'♥'.repeat(p.hp)}${'♡'.repeat(3-p.hp)}`}
+
+function drawTree(x,y,r,s){
+  ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  ctx.fillStyle='#5a3824';ctx.fillRect(-7,10,14,38);
+  ctx.beginPath();ctx.arc(0,0,31,0,Math.PI*2);ctx.fillStyle='#173f29';ctx.fill();
+  ctx.beginPath();ctx.arc(-18,12,22,0,Math.PI*2);ctx.fillStyle='#1d5533';ctx.fill();
+  ctx.beginPath();ctx.arc(20,10,23,0,Math.PI*2);ctx.fillStyle='#235f39';ctx.fill();
+  ctx.restore();
+}
+function draw(){
+  const C=cam();
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#3f7d45';ctx.fillRect(0,0,W,H);
+  // caminhos
+  ctx.strokeStyle='#9b7a4c';ctx.lineWidth=115;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(0-C.x,1500-C.y);ctx.quadraticCurveTo(900-C.x,1200-C.y,1450-C.x,1050-C.y);ctx.quadraticCurveTo(2000-C.x,900-C.y,3000-C.x,1100-C.y);ctx.stroke();
+  ctx.strokeStyle='#b28a55';ctx.lineWidth=85;ctx.stroke();
+  for(const f of flowers){let x=f.x-C.x,y=f.y-C.y;if(x>-10&&x<W+10&&y>-10&&y<H+10){ctx.fillStyle='#f2d7d0';ctx.beginPath();ctx.arc(x,y,f.r,0,7);ctx.fill()}}
+  for(const r of rocks){let x=r.x-C.x,y=r.y-C.y;if(x>-40&&x<W+40&&y>-40&&y<H+40){ctx.fillStyle='#66736a';ctx.beginPath();ctx.ellipse(x,y,r.r,r.r*.7,0,0,7);ctx.fill()}}
+  for(const t of trees){let x=t.x-C.x,y=t.y-C.y;if(x>-80&&x<W+80&&y>-100&&y<H+100)drawTree(x,y,t.r,t.s)}
+  // cristais
+  for(const q of crystals) if(!q.got){let x=q.x-C.x,y=q.y-C.y,b=Math.sin(performance.now()/350+q.phase)*5;
+    ctx.save();ctx.translate(x,y+b);ctx.rotate(.25);ctx.fillStyle='#aeeeff';ctx.shadowBlur=18;ctx.shadowColor='#8de7ff';
+    ctx.beginPath();ctx.moveTo(0,-18);ctx.lineTo(12,0);ctx.lineTo(0,18);ctx.lineTo(-12,0);ctx.closePath();ctx.fill();ctx.restore();
+  }
+  // inimigos
+  for(const e of enemies){e.x+=e.dx*.45;if(e.x<e.r||e.x>world.w-e.r)e.dx*=-1;let x=e.x-C.x,y=e.y-C.y;
+    ctx.fillStyle='#5a3b68';ctx.beginPath();ctx.arc(x,y,e.r,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.fillRect(x-8,y-4,5,5);ctx.fillRect(x+3,y-4,5,5);
+  }
+  // guardião
+  let nx=npc.x-C.x,ny=npc.y-C.y;ctx.fillStyle='#8d5b3d';ctx.beginPath();ctx.arc(nx,ny,27,0,7);ctx.fill();ctx.fillStyle='#e4c28f';ctx.beginPath();ctx.arc(nx,ny-18,18,0,7);ctx.fill();
+  ctx.fillStyle='#d6b94e';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('GUARDIÃO',nx,ny-43);
+  // duende
+  let px=p.x-C.x,py=p.y-C.y;
+  if(img.complete&&img.naturalWidth){
+    const h=115,w=78;ctx.save();ctx.translate(px,py-35+Math.sin(performance.now()/240)*3);
+    ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=10;ctx.drawImage(img,-w/2,-h/2,w,h);ctx.restore();
+  }else{ctx.fillStyle='#e5b98b';ctx.beginPath();ctx.arc(px,py-30,17,0,7);ctx.fill()}
+  // indicador
+  if(crystals.some(o=>!o.got&&dist(p,o)<90)||dist(p,npc)<120){ctx.fillStyle='#fff';ctx.font='bold 24px system-ui';ctx.textAlign='center';ctx.fillText('!',px,py-90)}
+  // vignette
+  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.75);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+function loop(){move();draw();requestAnimationFrame(loop)}updateHud();loop();
+</script>
+</body></html>
