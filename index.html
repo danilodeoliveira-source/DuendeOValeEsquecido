@@ -23,7 +23,7 @@ canvas{display:block;width:100%;height:100%;image-rendering:auto}
 <body>
 <canvas id="game"></canvas>
 <div id="hud">
-  <div class="panel"><div id="title">🍃 O VALE ESQUECIDO</div><div class="small">WASD / setas para explorar · E para interagir</div><div class="small" id="stats">Cristais: 0/8 · Vida: ♥♥♥</div></div>
+  <div class="panel"><div id="title">🍃 O VALE ESQUECIDO</div><div class="small">WASD / setas explorar · E interagir · ESPAÇO atacar</div><div class="small" id="stats">Cristais: 0/8 · Vida: ♥♥♥</div></div>
   <div id="quest">MISSÃO<br><b>Encontre os 8 cristais mágicos.</b><div class="small">Explore a floresta e converse com o Guardião.</div></div>
   <div id="msg"></div>
 </div>
@@ -40,7 +40,7 @@ let W,H,dpr,scale=1;
 function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
 addEventListener('resize',resize);resize();
 
-const keys={}; addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E') interact();});
+const keys={}; addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E') interact();if(e.key===' '||e.key==='j'||e.key==='J') attack();});
 addEventListener('keyup',e=>keys[e.key]=false);
 document.querySelectorAll('.btn').forEach(b=>{
   const k=b.dataset.k;
@@ -48,9 +48,14 @@ document.querySelectorAll('.btn').forEach(b=>{
   b.onpointerup=b.onpointercancel=b.onpointerleave=e=>{keys[k]=false};
 });
 document.getElementById('action').onpointerdown=e=>{e.preventDefault();interact()};
+document.getElementById('action').addEventListener('contextmenu',e=>e.preventDefault());
+let actionHeld=false;
+document.getElementById('action').addEventListener('pointerdown',()=>{actionHeld=true;attack()});
+document.getElementById('action').addEventListener('pointerup',()=>actionHeld=false);
+
 
 const world={w:3000,h:2100};
-const p={x:1450,y:1050,r:25,speed:4.2,hp:3};
+const p={x:1450,y:1050,r:25,speed:4.2,hp:3,vx:0,vy:0,facing:1,attackUntil:0,interactUntil:0,hitUntil:0};
 let crystals=[],trees=[],rocks=[],flowers=[],enemies=[],npc={x:1530,y:960};
 let collected=0,toastTimer=0,day=0;
 
@@ -80,15 +85,27 @@ function cam(){return {x:Math.max(0,Math.min(world.w-W,p.x-W/2)),y:Math.max(0,Ma
 function move(){
   let dx=(keys.ArrowRight||keys.d||keys.D?1:0)-(keys.ArrowLeft||keys.a||keys.A?1:0);
   let dy=(keys.ArrowDown||keys.s||keys.S?1:0)-(keys.ArrowUp||keys.w||keys.W?1:0);
+  p.vx=dx;p.vy=dy;
   if(dx||dy){let n=Math.hypot(dx,dy);dx/=n;dy/=n;
+    if(dx!==0)p.facing=dx>0?1:-1;
     let nx=p.x+dx*p.speed,ny=p.y+dy*p.speed;
     if(!blocked(nx,p.y))p.x=nx;if(!blocked(p.x,ny))p.y=ny;
   }
 }
+function attack(){
+  const now=performance.now();
+  if(now < (p.attackCooldown||0)) return;
+  p.attackCooldown=now+420;
+  p.attackUntil=now+260;
+  // Defeat a nearby roaming creature.
+  for(let i=enemies.length-1;i>=0;i--){
+    if(dist(p,enemies[i])<105){ enemies.splice(i,1); say('Golpe certeiro! 💥'); return; }
+  }
+}
 function interact(){
   const near=crystals.find(o=>!o.got&&dist(p,o)<70);
-  if(near){near.got=true;collected++;say('Você encontrou um cristal mágico! ✨');updateHud();return}
-  if(dist(p,npc)<100){say(collected<8?'Guardião: A floresta perdeu seus 8 cristais. Explore cada canto!':'Guardião: Você restaurou o coração do vale! A aventura continua...');}
+  if(near){near.got=true;collected++;p.interactUntil=performance.now()+650;say('Você encontrou um cristal mágico! ✨');updateHud();return}
+  if(dist(p,npc)<100){p.interactUntil=performance.now()+800;say(collected<8?'Guardião: A floresta perdeu seus 8 cristais. Explore cada canto!':'Guardião: Você restaurou o coração do vale! A aventura continua...');}
 }
 function say(t){const m=document.getElementById('msg');m.textContent=t;m.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>m.style.opacity=0,3000)}
 function updateHud(){document.getElementById('stats').textContent=`Cristais: ${collected}/8 · Vida: ${'♥'.repeat(p.hp)}${'♡'.repeat(3-p.hp)}`}
@@ -125,12 +142,46 @@ function draw(){
   // guardião
   let nx=npc.x-C.x,ny=npc.y-C.y;ctx.fillStyle='#8d5b3d';ctx.beginPath();ctx.arc(nx,ny,27,0,7);ctx.fill();ctx.fillStyle='#e4c28f';ctx.beginPath();ctx.arc(nx,ny-18,18,0,7);ctx.fill();
   ctx.fillStyle='#d6b94e';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('GUARDIÃO',nx,ny-43);
-  // duende
+  // DUENDE ANIMADO
   let px=p.x-C.x,py=p.y-C.y;
+  const moving = Math.hypot(p.vx||0,p.vy||0)>0.1;
+  const t=performance.now()/1000;
+  const bob = moving ? Math.sin(t*11)*3 : Math.sin(t*2.2)*2;
+  const swing = moving ? Math.sin(t*11)*0.12 : 0;
+  const atk = p.attackUntil>performance.now();
+  const hit = p.hitUntil>performance.now();
+  const action = atk ? 'attack' : (p.interactUntil>performance.now() ? 'interact' : (moving?'walk':'idle'));
   if(img.complete&&img.naturalWidth){
-    const h=115,w=78;ctx.save();ctx.translate(px,py-35+Math.sin(performance.now()/240)*3);
-    ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=10;ctx.drawImage(img,-w/2,-h/2,w,h);ctx.restore();
-  }else{ctx.fillStyle='#e5b98b';ctx.beginPath();ctx.arc(px,py-30,17,0,7);ctx.fill()}
+    const h=125,w=84;
+    ctx.save();
+    ctx.translate(px,py-42+bob);
+    if(hit) ctx.translate(Math.sin(t*45)*4,0);
+    ctx.rotate(atk ? -0.12+Math.sin(t*30)*0.05 : 0);
+    ctx.scale(p.facing<0?-1:1,1);
+    ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=10;
+    ctx.drawImage(img,-w/2,-h/2,w,h);
+    // motion/action accents
+    ctx.globalAlpha=.75;
+    if(action==='walk'){
+      ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(-36,18);ctx.lineTo(-48,22);ctx.moveTo(36,18);ctx.lineTo(48,22);ctx.stroke();
+    }
+    if(action==='interact'){
+      ctx.strokeStyle='#ffe68a';ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(0,-18,38,-2.8,-.3);ctx.stroke();
+    }
+    if(action==='attack'){
+      ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(22,-15);ctx.lineTo(58,-38);ctx.stroke();
+      ctx.strokeStyle='#ffd35a';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(31,-3);ctx.lineTo(65,-22);ctx.stroke();
+    }
+    ctx.restore();
+  }
+  if(hit){
+    ctx.fillStyle='rgba(255,90,90,.65)';
+    ctx.beginPath();ctx.arc(px,py-48,48,0,7);ctx.fill();
+  }
   // indicador
   if(crystals.some(o=>!o.got&&dist(p,o)<90)||dist(p,npc)<120){ctx.fillStyle='#fff';ctx.font='bold 24px system-ui';ctx.textAlign='center';ctx.fillText('!',px,py-90)}
   // vignette

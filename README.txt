@@ -1,11 +1,17 @@
-DUENDE — O VALE ESQUECIDO
-Jogo de exploração em navegador criado usando o duende do vídeo enviado.
+DUENDE — O VALE ESQUECIDO V2
+Versão com animações do personagem.
 
-Como jogar:
-1. Coloque index.html e duende.png no mesmo local.
-2. Abra index.html ou publique a pasta em GitHub Pages.
-3. WASD/setas movem o personagem.
-4. E interage com cristais e com o Guardião.
-5. No celular, use os botões na tela.
+Controles:
+- WASD / setas: andar
+- E: interagir com cristais e Guardião
+- Espaço ou J: atacar
+- No celular: use os botões na tela
 
-Objetivo: encontrar os 8 cristais mágicos espalhados pela floresta.
+Animações:
+- parado: respiração/balanço suave
+- andando: balanço e efeitos de movimento
+- interagindo: efeito dourado
+- atacando: golpe com efeito de impacto
+- levando dano: efeito visual de dano
+
+Objetivo: encontrar os 8 cristais mágicos.
