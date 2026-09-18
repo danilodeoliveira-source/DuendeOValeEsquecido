@@ -1,193 +1,2856 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Duende — O Vale Esquecido</title>
+<title>Duende — O Vale Esquecido V4</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07130d;font-family:system-ui,Arial}
-canvas{display:block;width:100%;height:100%;image-rendering:auto}
-#hud{position:fixed;inset:0;pointer-events:none;color:white}
-.panel{position:absolute;top:14px;left:14px;background:rgba(5,20,13,.78);border:2px solid rgba(255,255,255,.22);border-radius:14px;padding:10px 14px;backdrop-filter:blur(4px)}
-#title{font-weight:800;font-size:18px}.small{font-size:12px;opacity:.82;margin-top:3px}
-#quest{position:absolute;top:14px;right:14px;max-width:310px;text-align:right;background:rgba(5,20,13,.7);border-radius:14px;padding:10px 14px;border:1px solid rgba(255,255,255,.18)}
-#msg{position:absolute;left:50%;bottom:25px;transform:translateX(-50%);min-width:240px;max-width:80%;text-align:center;background:rgba(5,20,13,.86);border:2px solid rgba(255,255,255,.18);border-radius:14px;padding:11px 15px;opacity:0;transition:.2s}
+canvas{display:block;width:100%;height:100%}#hud{position:fixed;inset:0;pointer-events:none;color:#fff}
+.panel,.quest{background:rgba(5,20,13,.82);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:10px 14px}
+.panel{position:absolute;top:14px;left:14px}.quest{position:absolute;top:14px;right:14px;max-width:320px;text-align:right}.small{font-size:12px;opacity:.82;margin-top:3px}
+#msg{position:absolute;left:50%;bottom:25px;transform:translateX(-50%);min-width:240px;max-width:82%;text-align:center;background:rgba(5,20,13,.9);border-radius:14px;padding:11px 15px;opacity:0;transition:.2s}
 #touch{display:none;position:fixed;bottom:18px;left:18px;right:18px;justify-content:space-between;pointer-events:none}
 .pad{display:grid;grid-template-columns:58px 58px 58px;grid-template-rows:58px 58px 58px;gap:6px;pointer-events:auto}
-.btn{border:1px solid rgba(255,255,255,.25);background:rgba(10,25,16,.72);color:#fff;border-radius:14px;font-size:24px;touch-action:none}
+.btn,#attack{border:1px solid rgba(255,255,255,.25);background:rgba(10,25,16,.78);color:#fff;border-radius:14px;font-size:24px;touch-action:none}
 .up{grid-column:2}.left{grid-column:1;grid-row:2}.down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}
-#action{pointer-events:auto;width:90px;height:90px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(80,45,20,.8);color:#fff;font-weight:800;touch-action:none}
-@media (max-width:800px),(pointer:coarse){#touch{display:flex}.panel{font-size:12px}.panel .small{font-size:10px}#quest{max-width:220px;font-size:12px}}
-</style>
-</head>
-<body>
-<canvas id="game"></canvas>
-<div id="hud">
-  <div class="panel"><div id="title">🍃 O VALE ESQUECIDO</div><div class="small">WASD / setas explorar · E interagir · ESPAÇO atacar</div><div class="small" id="stats">Cristais: 0/8 · Vida: ♥♥♥</div></div>
-  <div id="quest">MISSÃO<br><b>Encontre os 8 cristais mágicos.</b><div class="small">Explore a floresta e converse com o Guardião.</div></div>
-  <div id="msg"></div>
-</div>
-<div id="touch">
-  <div class="pad">
-    <button class="btn up" data-k="ArrowUp">▲</button><button class="btn left" data-k="ArrowLeft">◀</button>
-    <button class="btn down" data-k="ArrowDown">▼</button><button class="btn right" data-k="ArrowRight">▶</button>
+#attack{pointer-events:auto;width:88px;height:88px;border-radius:50%;background:rgba(80,45,20,.85);font-weight:800}
+@media(max-width:800px),(pointer:coarse){#touch{display:flex}}
+#inventory{margin-top:4px;color:#ffe8a3}@media(max-width:800px){.quest{max-width:220px}} #startScreen{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at center,#263d28 0,#101711 65%,#070a08 100%);color:#fff;text-align:center;font-family:system-ui,sans-serif}
+#startScreen.hidden{display:none}.title{font-size:clamp(34px,7vw,76px);font-weight:900;letter-spacing:4px;text-shadow:0 6px 0 #111}.subtitle{font-size:clamp(16px,3vw,28px);letter-spacing:7px;color:#f4d47b;margin:4px 0 28px}
+.startbox{background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.18);border-radius:18px;padding:22px;backdrop-filter:blur(6px)}
+.startbox button{display:block;width:min(340px,75vw);margin:9px auto;padding:14px;border:0;border-radius:10px;background:#f0d06a;color:#1b1609;font-weight:900;font-size:16px;cursor:pointer}.startbox button:hover{filter:brightness(1.08)}
+.hint{font-size:11px;opacity:.75;margin-top:12px}.questpop{position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:30;background:rgba(15,20,14,.9);border:2px solid #e7ca69;border-radius:12px;padding:12px 20px;color:white;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}.questpop.show{opacity:1}
+#questline{color:#ffe49a}
+#mapPanel,#bagPanel{position:fixed;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);min-width:280px;max-width:85vw;padding:20px;border:2px solid #e6cf78;border-radius:16px;background:rgba(10,15,10,.94);color:#fff;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.55)}.panel button{margin-top:16px;padding:9px 22px;border:0;border-radius:8px;font-weight:800}.hidden{display:none!important}
+#regionBanner{position:fixed;left:50%;top:10%;transform:translateX(-50%);z-index:25;color:#fff;background:rgba(0,0,0,.72);border:1px solid #e4ca6c;border-radius:12px;padding:8px 18px;font-weight:800;opacity:0;transition:opacity .3s;pointer-events:none}.region{color:#f5d778}
+#bossHint{position:fixed;right:16px;bottom:76px;z-index:18;color:#fff;background:rgba(0,0,0,.65);padding:8px 12px;border-radius:10px;font-size:12px;display:none}
+#checkpoint{position:fixed;left:50%;bottom:16%;transform:translateX(-50%);z-index:24;background:rgba(10,12,10,.88);border:1px solid #e5ca6c;border-radius:12px;padding:9px 16px;color:#fff;opacity:0;transition:opacity .25s;pointer-events:none}#checkpoint.show{opacity:1}
+#combatHud{position:fixed;left:16px;bottom:72px;z-index:18;color:#fff;background:rgba(0,0,0,.6);border-radius:10px;padding:7px 11px;font-size:12px;display:none}
+</style></head><body><div id="checkpoint"></div><div id="combatHud"></div><div id="regionBanner"></div><div id="bossHint">⚔ Arena do Chefe: aproxime-se para lutar</div>
+<div id="mapPanel" class="panel hidden"><b>MAPA DO VALE</b><div id="mapInfo">Explore as regiões do Vale.</div><button onclick="toggleMap()">Fechar</button></div>
+<div id="bagPanel" class="panel hidden"><b>MOCHILA</b><div id="bagInfo"></div><button onclick="toggleBag()">Fechar</button></div>
+<div id="startScreen">
+  <div class="title">DUENDE EXPLORADOR</div>
+  <div class="subtitle">O VALE ESQUECIDO</div>
+  <div class="startbox">
+    <button id="startBtn">▶ COMEÇAR A EXPLORAR</button>
+    <button id="continueBtn">↻ CONTINUAR</button>
+    <div class="hint">WASD / setas · Shift correr · E interagir · Espaço atacar</div><div class="hint">M = mapa · I = mochila · F = salvar</div>
   </div>
-  <button id="action">E</button>
-</div>
+</div><canvas id="game"></canvas>
+<div id="hud"><div class="panel"><b>🍃 O VALE ESQUECIDO — V4</b>
+<div class="small">WASD/setas andar · E interagir · Espaço/J atacar</div><div class="small" id="stats"></div></div>
+<div class="quest">MISSÃO<br><b>Encontre os 8 cristais mágicos.</b><div class="small">Stop-motion com quadros reais do vídeo.</div><div class="small" id="time"></div><div class="small" id="questline">Missão: fale com o Guardião.</div><div class="small" id="inventory">Bolsa: 0 poções · 0 moedas</div></div><div id="msg"></div></div>
+<div id="touch"><div class="pad"><button class="btn up" data-k="ArrowUp">▲</button><button class="btn left" data-k="ArrowLeft">◀</button><button class="btn down" data-k="ArrowDown">▼</button><button class="btn right" data-k="ArrowRight">▶</button></div><button id="attack">⚔</button></div>
 <script>
-const c=document.getElementById('game'),ctx=c.getContext('2d');
-let W,H,dpr,scale=1;
-function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
-addEventListener('resize',resize);resize();
+/* V11 compatibility bridge */
 
-const keys={}; addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E') interact();if(e.key===' '||e.key==='j'||e.key==='J') attack();});
-addEventListener('keyup',e=>keys[e.key]=false);
-document.querySelectorAll('.btn').forEach(b=>{
-  const k=b.dataset.k;
-  b.onpointerdown=e=>{e.preventDefault();keys[k]=true};
-  b.onpointerup=b.onpointercancel=b.onpointerleave=e=>{keys[k]=false};
-});
-document.getElementById('action').onpointerdown=e=>{e.preventDefault();interact()};
-document.getElementById('action').addEventListener('contextmenu',e=>e.preventDefault());
-let actionHeld=false;
-document.getElementById('action').addEventListener('pointerdown',()=>{actionHeld=true;attack()});
-document.getElementById('action').addEventListener('pointerup',()=>actionHeld=false);
+const c=document.getElementById('game'),ctx=c.getContext('2d');let W,H,dpr;
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+const keys={};let paused=false;addEventListener('keydown',e=>{keys[e.key]=true;if(e.key==='e'||e.key==='E')interact();if(e.key===' '||e.key==='j'||e.key==='J')attack()});addEventListener('keyup',e=>keys[e.key]=false);addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')paused=!paused;});
+document.querySelectorAll('.btn').forEach(b=>{const k=b.dataset.k;b.onpointerdown=e=>{e.preventDefault();keys[k]=true};b.onpointerup=b.onpointercancel=b.onpointerleave=()=>keys[k]=false});
+document.getElementById('attack').onpointerdown=e=>{e.preventDefault();attack()};
+const world={w:3000,h:2100};const p={x:1450,y:1050,r:25,speed:4.3,hp:3,vx:0,vy:0,facing:1,state:'idle',attackUntil:0,attackCooldown:0,interactUntil:0,hitUntil:0,invulnUntil:0};
+let trees=[],rocks=[],flowers=[],crystals=[],enemies=[],chests=[],collected=0,coins=0,potions=0,stamina=100,worldTime=0,lastTick=performance.now();const npc={x:1530,y:960};
+function rand(a,b){return Math.random()*(b-a)+a}function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function blocked(x,y){for(const t of trees)if(Math.hypot(x-t.x,y-t.y)<t.r+20)return true;for(const r of rocks)if(Math.hypot(x-r.x,y-r.y)<r.r+18)return true;return x<30||y<30||x>world.w-30||y>world.h-30}
+for(let i=0;i<145;i++){let x=rand(60,2940),y=rand(60,2040);if(Math.hypot(x-p.x,y-p.y)<250){i--;continue}trees.push({x,y,r:rand(24,39),s:rand(.8,1.25)})}
+for(let i=0;i<65;i++)rocks.push({x:rand(50,2950),y:rand(50,2050),r:rand(9,18)});for(let i=0;i<170;i++)flowers.push({x:rand(40,2960),y:rand(40,2060),r:rand(2,4)});
+[[720,420],[2340,430],[560,1560],[2480,1510],[1110,720],[2050,1120],[1750,1760],[2700,980]].forEach((q,i)=>crystals.push({x:q[0],y:q[1],got:false,phase:i*.8}));[[980,520],[1980,520],[760,1220],[2350,1280],[1450,1750]].forEach((q,i)=>chests.push({x:q[0],y:q[1],open:false,coins:5+i*3,potion:i%2===0}));
+const boss={x:2680,y:1750,hp:12,maxHp:12,alive:true,cool:0};
+const shrines=[{x:1450,y:1050,name:'Santuário da Floresta'},{x:1850,y:1040,name:'Santuário do Pântano'},{x:2580,y:1040,name:'Santuário das Ruínas'}];
 
-
-const world={w:3000,h:2100};
-const p={x:1450,y:1050,r:25,speed:4.2,hp:3,vx:0,vy:0,facing:1,attackUntil:0,interactUntil:0,hitUntil:0};
-let crystals=[],trees=[],rocks=[],flowers=[],enemies=[],npc={x:1530,y:960};
-let collected=0,toastTimer=0,day=0;
-
-function rand(a,b){return Math.random()*(b-a)+a}
-function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
-function blocked(x,y){
-  for(const t of trees) if(Math.hypot(x-t.x,y-t.y)<t.r+20) return true;
-  for(const r of rocks) if(Math.hypot(x-r.x,y-r.y)<r.r+18) return true;
-  return x<30||y<30||x>world.w-30||y>world.h-30;
-}
-function addForest(){
-  for(let i=0;i<145;i++){
-    let x=rand(60,world.w-60),y=rand(60,world.h-60);
-    if(Math.hypot(x-p.x,y-p.y)<250) {i--;continue}
-    trees.push({x,y,r:rand(24,39),s:rand(.8,1.25)});
-  }
-  for(let i=0;i<65;i++) rocks.push({x:rand(50,world.w-50),y:rand(50,world.h-50),r:rand(9,18)});
-  for(let i=0;i<170;i++) flowers.push({x:rand(40,world.w-40),y:rand(40,world.h-40),r:rand(2,4)});
-  const pts=[[720,420],[2340,430],[560,1560],[2480,1510],[1110,720],[2050,1120],[1750,1760],[2700,980]];
-  pts.forEach((q,i)=>crystals.push({x:q[0],y:q[1],got:false,phase:i*.8}));
-  enemies=[{x:880,y:980,r:20,dx:1},{x:2200,y:760,r:20,dx:-1},{x:1920,y:1480,r:20,dx:1}];
-}
-addForest();
-
-const img=new Image();img.src='duende.png';
-function cam(){return {x:Math.max(0,Math.min(world.w-W,p.x-W/2)),y:Math.max(0,Math.min(world.h-H,p.y-H/2))}}
+enemies=[{x:880,y:980,r:20,dx:1},{x:2200,y:760,r:20,dx:-1},{x:1920,y:1480,r:20,dx:1}];
+const spritePaths=["frames/frame_00.png","frames/frame_01.png","frames/frame_02.png","frames/frame_03.png","frames/frame_04.png","frames/frame_05.png","frames/frame_06.png","frames/frame_07.png","frames/frame_08.png","frames/frame_09.png","frames/frame_10.png","frames/frame_11.png"],sprites=[];spritePaths.forEach((s,i)=>{const im=new Image();im.src=s;sprites[i]=im});
+function cam(){return{x:Math.max(0,Math.min(world.w-W,p.x-W/2)),y:Math.max(0,Math.min(world.h-H,p.y-H/2))}}
 function move(){
-  let dx=(keys.ArrowRight||keys.d||keys.D?1:0)-(keys.ArrowLeft||keys.a||keys.A?1:0);
-  let dy=(keys.ArrowDown||keys.s||keys.S?1:0)-(keys.ArrowUp||keys.w||keys.W?1:0);
-  p.vx=dx;p.vy=dy;
-  if(dx||dy){let n=Math.hypot(dx,dy);dx/=n;dy/=n;
-    if(dx!==0)p.facing=dx>0?1:-1;
-    let nx=p.x+dx*p.speed,ny=p.y+dy*p.speed;
-    if(!blocked(nx,p.y))p.x=nx;if(!blocked(p.x,ny))p.y=ny;
-  }
+ let dx=(keys.ArrowRight||keys.d||keys.D?1:0)-(keys.ArrowLeft||keys.a||keys.A?1:0),dy=(keys.ArrowDown||keys.s||keys.S?1:0)-(keys.ArrowUp||keys.w||keys.W?1:0);
+ p.vx=dx;p.vy=dy;const sprint=!!keys.Shift&&stamina>1;
+ if(dx||dy){let n=Math.hypot(dx,dy);dx/=n;dy/=n;if(dx)p.facing=dx>0?1:-1;let speed=p.speed*(sprint?1.65:1);stamina=sprint?Math.max(0,stamina-.55):Math.min(100,stamina+.18);let nx=p.x+dx*speed,ny=p.y+dy*speed;if(!blocked(nx,p.y))p.x=nx;if(!blocked(p.x,ny))p.y=ny;if(performance.now()>p.attackUntil&&performance.now()>p.interactUntil)p.state='walk'}
+ else{stamina=Math.min(100,stamina+.45);if(performance.now()>p.attackUntil&&performance.now()>p.interactUntil&&p.state!=='hit')p.state='idle'}
 }
-function attack(){
-  const now=performance.now();
-  if(now < (p.attackCooldown||0)) return;
-  p.attackCooldown=now+420;
-  p.attackUntil=now+260;
-  // Defeat a nearby roaming creature.
-  for(let i=enemies.length-1;i>=0;i--){
-    if(dist(p,enemies[i])<105){ enemies.splice(i,1); say('Golpe certeiro! 💥'); return; }
-  }
-}
-function interact(){
-  const near=crystals.find(o=>!o.got&&dist(p,o)<70);
-  if(near){near.got=true;collected++;p.interactUntil=performance.now()+650;say('Você encontrou um cristal mágico! ✨');updateHud();return}
-  if(dist(p,npc)<100){p.interactUntil=performance.now()+800;say(collected<8?'Guardião: A floresta perdeu seus 8 cristais. Explore cada canto!':'Guardião: Você restaurou o coração do vale! A aventura continua...');}
-}
-function say(t){const m=document.getElementById('msg');m.textContent=t;m.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>m.style.opacity=0,3000)}
-function updateHud(){document.getElementById('stats').textContent=`Cristais: ${collected}/8 · Vida: ${'♥'.repeat(p.hp)}${'♡'.repeat(3-p.hp)}`}
+function loop(){let now=performance.now();let dt=Math.min(50,now-lastTick);lastTick=now;if(gameStarted&&!paused){worldTime+=dt;move();damage();updateRegion();updateCheckpoint()}updateHud();draw();requestAnimationFrame(loop)}loadGame();updateHud();loop();
 
-function drawTree(x,y,r,s){
-  ctx.save();ctx.translate(x,y);ctx.scale(s,s);
-  ctx.fillStyle='#5a3824';ctx.fillRect(-7,10,14,38);
-  ctx.beginPath();ctx.arc(0,0,31,0,Math.PI*2);ctx.fillStyle='#173f29';ctx.fill();
-  ctx.beginPath();ctx.arc(-18,12,22,0,Math.PI*2);ctx.fillStyle='#1d5533';ctx.fill();
-  ctx.beginPath();ctx.arc(20,10,23,0,Math.PI*2);ctx.fillStyle='#235f39';ctx.fill();
-  ctx.restore();
-}
-function draw(){
-  const C=cam();
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#3f7d45';ctx.fillRect(0,0,W,H);
-  // caminhos
-  ctx.strokeStyle='#9b7a4c';ctx.lineWidth=115;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(0-C.x,1500-C.y);ctx.quadraticCurveTo(900-C.x,1200-C.y,1450-C.x,1050-C.y);ctx.quadraticCurveTo(2000-C.x,900-C.y,3000-C.x,1100-C.y);ctx.stroke();
-  ctx.strokeStyle='#b28a55';ctx.lineWidth=85;ctx.stroke();
-  for(const f of flowers){let x=f.x-C.x,y=f.y-C.y;if(x>-10&&x<W+10&&y>-10&&y<H+10){ctx.fillStyle='#f2d7d0';ctx.beginPath();ctx.arc(x,y,f.r,0,7);ctx.fill()}}
-  for(const r of rocks){let x=r.x-C.x,y=r.y-C.y;if(x>-40&&x<W+40&&y>-40&&y<H+40){ctx.fillStyle='#66736a';ctx.beginPath();ctx.ellipse(x,y,r.r,r.r*.7,0,0,7);ctx.fill()}}
-  for(const t of trees){let x=t.x-C.x,y=t.y-C.y;if(x>-80&&x<W+80&&y>-100&&y<H+100)drawTree(x,y,t.r,t.s)}
-  // cristais
-  for(const q of crystals) if(!q.got){let x=q.x-C.x,y=q.y-C.y,b=Math.sin(performance.now()/350+q.phase)*5;
-    ctx.save();ctx.translate(x,y+b);ctx.rotate(.25);ctx.fillStyle='#aeeeff';ctx.shadowBlur=18;ctx.shadowColor='#8de7ff';
-    ctx.beginPath();ctx.moveTo(0,-18);ctx.lineTo(12,0);ctx.lineTo(0,18);ctx.lineTo(-12,0);ctx.closePath();ctx.fill();ctx.restore();
+/* ==================== V11: GUARDIÃO APRIMORADO ==================== */
+(function(){
+  // Extra persistent stats.
+  window.v11BossProjectiles = window.v11BossProjectiles || [];
+  window.v11Weather = window.v11Weather || { type:"clear", timer:0 };
+  window.v11DefeatedEnemies = window.v11DefeatedEnemies || 0;
+
+  // Make a safe save wrapper that preserves V10's saveGame.
+  const oldSave = window.saveGame;
+  if (typeof oldSave === "function") {
+    window.saveGame = function(){
+      try { oldSave(); } catch(e) {}
+      try {
+        const raw = localStorage.getItem("duende_explorador_save");
+        let s = {};
+        try { s = raw ? JSON.parse(raw) : {}; } catch(e){}
+        s.v11 = {
+          defeatedEnemies: window.v11DefeatedEnemies,
+          weather: window.v11Weather
+        };
+        localStorage.setItem("duende_explorador_save", JSON.stringify(s));
+      } catch(e){}
+    };
   }
-  // inimigos
-  for(const e of enemies){e.x+=e.dx*.45;if(e.x<e.r||e.x>world.w-e.r)e.dx*=-1;let x=e.x-C.x,y=e.y-C.y;
-    ctx.fillStyle='#5a3b68';ctx.beginPath();ctx.arc(x,y,e.r,0,7);ctx.fill();
-    ctx.fillStyle='#fff';ctx.fillRect(x-8,y-4,5,5);ctx.fillRect(x+3,y-4,5,5);
-  }
-  // guardião
-  let nx=npc.x-C.x,ny=npc.y-C.y;ctx.fillStyle='#8d5b3d';ctx.beginPath();ctx.arc(nx,ny,27,0,7);ctx.fill();ctx.fillStyle='#e4c28f';ctx.beginPath();ctx.arc(nx,ny-18,18,0,7);ctx.fill();
-  ctx.fillStyle='#d6b94e';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('GUARDIÃO',nx,ny-43);
-  // DUENDE ANIMADO
-  let px=p.x-C.x,py=p.y-C.y;
-  const moving = Math.hypot(p.vx||0,p.vy||0)>0.1;
-  const t=performance.now()/1000;
-  const bob = moving ? Math.sin(t*11)*3 : Math.sin(t*2.2)*2;
-  const swing = moving ? Math.sin(t*11)*0.12 : 0;
-  const atk = p.attackUntil>performance.now();
-  const hit = p.hitUntil>performance.now();
-  const action = atk ? 'attack' : (p.interactUntil>performance.now() ? 'interact' : (moving?'walk':'idle'));
-  if(img.complete&&img.naturalWidth){
-    const h=125,w=84;
-    ctx.save();
-    ctx.translate(px,py-42+bob);
-    if(hit) ctx.translate(Math.sin(t*45)*4,0);
-    ctx.rotate(atk ? -0.12+Math.sin(t*30)*0.05 : 0);
-    ctx.scale(p.facing<0?-1:1,1);
-    ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=10;
-    ctx.drawImage(img,-w/2,-h/2,w,h);
-    // motion/action accents
-    ctx.globalAlpha=.75;
-    if(action==='walk'){
-      ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(-36,18);ctx.lineTo(-48,22);ctx.moveTo(36,18);ctx.lineTo(48,22);ctx.stroke();
+
+  // Boss projectile update/draw. It follows the existing global player/boss variables
+  // when those names exist; otherwise it remains dormant.
+  window.v11SpawnBossOrb = function(x,y,tx,ty){
+    const dx=tx-x, dy=ty-y, d=Math.hypot(dx,dy)||1;
+    window.v11BossProjectiles.push({
+      x,y,vx:dx/d*3.2,vy:dy/d*3.2,life:180,r:7
+    });
+  };
+
+  // Hook a lightweight periodic boss attack without changing V10 movement/combat.
+  let attackClock=0;
+  function tickBossAttack(dt){
+    if (!window.gameStarted || window.bossDefeated) return;
+    attackClock += dt || 1;
+    if (attackClock < 240) return;
+    attackClock=0;
+    if (typeof window.boss !== "undefined" && typeof window.player !== "undefined") {
+      try {
+        const b=window.boss, p=window.player;
+        if (b && p && typeof b.x==="number" && typeof p.x==="number") {
+          window.v11SpawnBossOrb(b.x,b.y,p.x,p.y);
+        }
+      } catch(e){}
     }
-    if(action==='interact'){
-      ctx.strokeStyle='#ffe68a';ctx.lineWidth=3;
-      ctx.beginPath();ctx.arc(0,-18,38,-2.8,-.3);ctx.stroke();
-    }
-    if(action==='attack'){
-      ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.lineCap='round';
-      ctx.beginPath();ctx.moveTo(22,-15);ctx.lineTo(58,-38);ctx.stroke();
-      ctx.strokeStyle='#ffd35a';ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(31,-3);ctx.lineTo(65,-22);ctx.stroke();
-    }
-    ctx.restore();
   }
-  if(hit){
-    ctx.fillStyle='rgba(255,90,90,.65)';
-    ctx.beginPath();ctx.arc(px,py-48,48,0,7);ctx.fill();
+
+  // Standalone canvas effect: draw only if the game canvas is exposed.
+  function drawV11(ctx){
+    if (!ctx) return;
+    // Projectiles.
+    for (const q of window.v11BossProjectiles) {
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,Math.min(1,q.life/40));
+      ctx.beginPath();
+      ctx.arc(q.x,q.y,q.r,0,Math.PI*2);
+      ctx.fillStyle="#b58cff";
+      ctx.fill();
+      ctx.restore();
+    }
   }
-  // indicador
-  if(crystals.some(o=>!o.got&&dist(p,o)<90)||dist(p,npc)<120){ctx.fillStyle='#fff';ctx.font='bold 24px system-ui';ctx.textAlign='center';ctx.fillText('!',px,py-90)}
-  // vignette
-  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.75);
-  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.35)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-}
-function loop(){move();draw();requestAnimationFrame(loop)}updateHud();loop();
+
+  function updateProjectiles(){
+    if (!window.player) return;
+    const p=window.player;
+    for(let i=window.v11BossProjectiles.length-1;i>=0;i--){
+      const q=window.v11BossProjectiles[i];
+      q.x+=q.vx; q.y+=q.vy; q.life--;
+      if (q.life<=0) { window.v11BossProjectiles.splice(i,1); continue; }
+      if (typeof p.x==="number" && typeof p.y==="number" &&
+          Math.hypot(q.x-p.x,q.y-p.y)<24) {
+        if (typeof window.damageFlash!=="undefined") window.damageFlash=18;
+        if (typeof p.hp==="number") p.hp=Math.max(0,p.hp-1);
+        window.v11BossProjectiles.splice(i,1);
+      }
+    }
+  }
+
+  // Patch main loop by adding an animation frame listener rather than replacing it.
+  function rafTick(){
+    try {
+      tickBossAttack(1);
+      updateProjectiles();
+      const c=document.querySelector("canvas");
+      if(c){
+        const ctx=c.getContext("2d");
+        if(ctx) drawV11(ctx);
+      }
+    } catch(e){}
+    requestAnimationFrame(rafTick);
+  }
+  requestAnimationFrame(rafTick);
+
+  // Weather cycle: visual-only, low cost.
+  let weatherClock=0;
+  function weatherTick(){
+    if(!window.gameStarted || window.gamePaused) return;
+    weatherClock++;
+    if(weatherClock % 1800 === 0){
+      const types=["clear","rain","mist"];
+      window.v11Weather.type=types[Math.floor(Math.random()*types.length)];
+      window.v11Weather.timer=1800;
+    }
+    if(window.v11Weather.timer>0) window.v11Weather.timer--;
+  }
+
+  // Tiny HUD chip.
+  function hud(){
+    let el=document.getElementById("v11-hud");
+    if(!el){
+      el=document.createElement("div");
+      el.id="v11-hud";
+      el.style.cssText="position:fixed;right:12px;top:12px;z-index:40;padding:7px 10px;border:1px solid rgba(255,255,255,.3);border-radius:10px;background:rgba(10,15,25,.68);color:#fff;font:700 12px monospace;pointer-events:none";
+      document.body.appendChild(el);
+    }
+    const w=window.v11Weather.type;
+    el.textContent="V11 • "+(w==="rain"?"CHUVA":w==="mist"?"NEBLINA":"CLIMA LIMPO");
+  }
+  setInterval(function(){weatherTick();hud();},1000);
+
+  // Keyboard shortcuts for V11 extras.
+  window.addEventListener("keydown",function(e){
+    if(e.key.toLowerCase()==="r"){
+      window.v11Weather.type="rain"; window.v11Weather.timer=1800;
+    }
+    if(e.key.toLowerCase()==="t"){
+      window.v11Weather.type="mist"; window.v11Weather.timer=1800;
+    }
+  });
+})();
+
+</script><div id="questPop" class="questpop"></div>
+<script>
+/* ==================== DUENDE EXPLORADOR V12 ====================
+   Sistemas: habilidades, equipamentos, lojas, inimigos elite,
+   objetivos secundários e painel de status.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v12";
+  const S=window.v12State=JSON.parse(localStorage.getItem(KEY)||"null")||{
+    level:1,xp:0,attackBonus:0,defense:0,speedBonus:0,
+    equipment:{weapon:"Galho Encantado",armor:"Capa do Vale"},
+    upgrades:0, eliteDefeated:0, sideQuest:0
+  };
+
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  }
+  function xpNeed(){return 100+(S.level-1)*75;}
+  function gainXP(n){
+    S.xp+=n;
+    while(S.xp>=xpNeed()){
+      S.xp-=xpNeed();
+      S.level++;
+      S.attackBonus++;
+      if(typeof window.coins==="number") window.coins+=25;
+      toast("SUBIU DE NÍVEL! Nv. "+S.level+"  •  +ATAQUE  •  +25 MOEDAS");
+    }
+    save(); render();
+  }
+  function toast(msg){
+    let e=document.getElementById("v12-toast");
+    if(!e){
+      e=document.createElement("div");e.id="v12-toast";
+      e.style.cssText="position:fixed;left:50%;top:15%;transform:translateX(-50%);z-index:100;padding:12px 18px;border-radius:12px;background:rgba(12,18,28,.92);border:2px solid #fff;color:#fff;font:800 14px monospace;text-align:center;box-shadow:0 8px 30px #0008;pointer-events:none";
+      document.body.appendChild(e);
+    }
+    e.textContent=msg;e.style.display="block";
+    clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1800);
+  }
+
+  // Status panel.
+  function panel(){
+    let e=document.getElementById("v12-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v12-panel";
+    e.style.cssText="position:fixed;right:12px;bottom:72px;z-index:80;width:min(300px,calc(100vw - 24px));padding:14px;border:2px solid rgba(255,255,255,.5);border-radius:14px;background:rgba(8,12,20,.94);color:#fff;font:13px monospace;display:none;box-shadow:0 10px 35px #0009";
+    document.body.appendChild(e);return e;
+  }
+  function render(){
+    const e=panel();
+    const hp=(window.player&&typeof window.player.hp==="number")?window.player.hp:"—";
+    e.innerHTML="<b>DUENDE • STATUS V12</b><hr>"+
+      "Nível: <b>"+S.level+"</b><br>"+
+      "XP: "+S.xp+" / "+xpNeed()+"<br>"+
+      "Ataque extra: +"+S.attackBonus+"<br>"+
+      "Defesa: +"+S.defense+"<br>"+
+      "Velocidade: +"+S.speedBonus+"<br>"+
+      "Arma: "+S.equipment.weapon+"<br>"+
+      "Armadura: "+S.equipment.armor+"<br>"+
+      "Elites derrotados: "+S.eliteDefeated+"<br>"+
+      "Missões secundárias: "+S.sideQuest+"<br>"+
+      "Vida atual: "+hp;
+  }
+
+  function toggle(){const e=panel();e.style.display=e.style.display==="none"?"block":"none";render();}
+
+  // Simple equipment/shop menu.
+  function shop(){
+    let e=document.getElementById("v12-shop");
+    if(!e){
+      e=document.createElement("div");e.id="v12-shop";
+      e.style.cssText="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;font:14px monospace;color:#fff";
+      e.innerHTML='<div style="width:min(430px,92vw);padding:20px;border:2px solid #fff;border-radius:16px;background:#101722;text-align:center">'+
+      '<h2>LOJA DO VALE</h2><p id="v12-shop-info"></p>'+
+      '<button data-buy="weapon" style="padding:12px;margin:5px">ESPADA DE MUSGO • 80</button>'+
+      '<button data-buy="armor" style="padding:12px;margin:5px">ARMADURA DE RAIZ • 80</button>'+
+      '<button data-buy="speed" style="padding:12px;margin:5px">BOTAS DO VENTO • 60</button><br>'+
+      '<button id="v12-close" style="padding:10px;margin-top:10px">FECHAR</button></div>';
+      document.body.appendChild(e);
+      e.querySelector("#v12-close").onclick=()=>e.style.display="none";
+      e.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>{
+        const type=b.dataset.buy;
+        const cost=type==="speed"?60:80;
+        if(typeof window.coins!=="number" || window.coins<cost){toast("MOEDAS INSUFICIENTES");return;}
+        window.coins-=cost;
+        if(type==="weapon"){S.equipment.weapon="Espada de Musgo";S.attackBonus+=2;}
+        if(type==="armor"){S.equipment.armor="Armadura de Raiz";S.defense+=2;}
+        if(type==="speed"){S.speedBonus+=1;}
+        S.upgrades++;save();render();updateInfo();toast("EQUIPAMENTO ADQUIRIDO!");
+      });
+    }
+    e.style.display="flex";updateInfo();
+  }
+  function updateInfo(){
+    const e=document.getElementById("v12-shop-info");
+    if(e)e.textContent="Moedas: "+(typeof window.coins==="number"?window.coins:0)+" • Nv. "+S.level;
+  }
+
+  // Add a visible V12 button group without modifying the existing game's controls.
+  function controls(){
+    if(document.getElementById("v12-controls"))return;
+    const wrap=document.createElement("div");wrap.id="v12-controls";
+    wrap.style.cssText="position:fixed;left:12px;bottom:12px;z-index:70;display:flex;gap:6px;flex-wrap:wrap";
+    [["STATUS","status"],["LOJA","shop"]].forEach(([label,type])=>{
+      const b=document.createElement("button");b.textContent=label;
+      b.style.cssText="padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.82);color:#fff;font:800 11px monospace";
+      b.onclick=type==="status"?toggle:shop;wrap.appendChild(b);
+    });
+    document.body.appendChild(wrap);
+  }
+
+  // Hook attack key to award XP on successful attacks in a safe, generic way.
+  let lastAttack=0;
+  window.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="c") shop();
+    if(k==="v") toggle();
+    if(k==="l"){gainXP(25);toast("XP DE EXPLORAÇÃO +25");}
+    if((k==="j"||e.code==="Space") && Date.now()-lastAttack>500){
+      lastAttack=Date.now();
+      // Small exploration/combat reward; no direct mutation of V10 combat code.
+      gainXP(5);
+    }
+  });
+
+  // Periodic discovery XP based on moving far enough from origin.
+  let lastDist=0;
+  setInterval(()=>{
+    try{
+      controls();
+      if(window.player && typeof window.player.x==="number" && typeof window.player.y==="number"){
+        const d=Math.floor(Math.hypot(window.player.x,window.player.y)/300);
+        if(d>lastDist){lastDist=d;gainXP(10);}
+      }
+      render();updateInfo();
+    }catch(e){}
+  },1000);
+
+  window.v12GainXP=gainXP;
+  window.v12Shop=shop;
+  window.v12Status=toggle;
+  render();
+  controls();
+})();
 </script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V13 ====================
+   Sistema de missões secundárias, conquistas, diário e autosave.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v13";
+  const defaultState={
+    missions:{
+      explorer:{progress:0,target:5,done:false,reward:50},
+      collector:{progress:0,target:3,done:false,reward:40},
+      survivor:{progress:0,target:10,done:false,reward:60}
+    },
+    achievements:{firstStep:false,collector:false,level5:false},
+    autosave:true,
+    visited:[],
+    sessionStart:Date.now()
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||defaultState;
+
+  function save(){
+    try{
+      localStorage.setItem(KEY,JSON.stringify(S));
+      if(typeof window.saveGame==="function") {
+        try{ window.saveGame(); }catch(e){}
+      }
+      toast("PROGRESSO SALVO");
+    }catch(e){}
+  }
+
+  function toast(msg){
+    let e=document.getElementById("v13-toast");
+    if(!e){
+      e=document.createElement("div");
+      e.id="v13-toast";
+      e.style.cssText="position:fixed;left:50%;top:13%;transform:translateX(-50%);z-index:150;padding:11px 16px;border:2px solid #fff;border-radius:12px;background:rgba(8,12,20,.95);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 10px 30px #0009";
+      document.body.appendChild(e);
+    }
+    e.textContent=msg;e.style.display="block";
+    clearTimeout(e._timer);e._timer=setTimeout(()=>e.style.display="none",1600);
+  }
+
+  function reward(n){
+    if(typeof window.coins==="number") window.coins+=n;
+    if(typeof window.v12GainXP==="function") window.v12GainXP(Math.floor(n/2));
+  }
+
+  function mission(name, label){
+    const m=S.missions[name];
+    return "<div style='margin:8px 0;padding:9px;border:1px solid #ffffff44;border-radius:9px'>"+
+      "<b>"+label+"</b><br><span>"+m.progress+" / "+m.target+"</span> "+
+      (m.done?"<b>✓ CONCLUÍDA</b>":"")+
+      "</div>";
+  }
+
+  function openJournal(){
+    let e=document.getElementById("v13-journal");
+    if(!e){
+      e=document.createElement("div");
+      e.id="v13-journal";
+      e.style.cssText="position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+      e.innerHTML="<div style='width:min(470px,92vw);max-height:85vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#111a25'>"+
+        "<h2 style='margin-top:0'>DIÁRIO DO VALE — V13</h2>"+
+        "<div id='v13-journal-body'></div>"+
+        "<button id='v13-journal-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+      document.body.appendChild(e);
+      e.querySelector("#v13-journal-close").onclick=()=>e.style.display="none";
+    }
+    const body=e.querySelector("#v13-journal-body");
+    body.innerHTML=
+      "<h3>MISSÕES</h3>"+
+      mission("explorer","Explorador do Vale — visite 5 pontos diferentes.")+
+      mission("collector","Colecionador — descubra 3 locais importantes.")+
+      mission("survivor","Guardião — sobreviva a 10 minutos de exploração.")+
+      "<h3>CONQUISTAS</h3>"+
+      "<p>"+(S.achievements.firstStep?"✓ ":"○ ")+"Primeiro Passo</p>"+
+      "<p>"+(S.achievements.collector?"✓ ":"○ ")+"Colecionador</p>"+
+      "<p>"+(S.achievements.level5?"✓ ":"○ ")+"Nível 5</p>"+
+      "<hr><p>Autosave: "+(S.autosave?"ATIVADO":"DESATIVADO")+"</p>";
+    e.style.display="flex";
+  }
+
+  function completeMission(name){
+    const m=S.missions[name];
+    if(m.done || m.progress<m.target) return;
+    m.done=true;
+    reward(m.reward);
+    toast("MISSÃO CONCLUÍDA! +"+m.reward+" MOEDAS");
+    save();
+  }
+
+  // Track exploration using the player's position, without replacing V10/V11/V12 movement.
+  let lastX=null,lastY=null,lastRegion=null,seconds=0;
+  setInterval(function(){
+    try{
+      if(!window.gameStarted || window.gamePaused) return;
+      seconds++;
+      const p=window.player;
+      if(p && typeof p.x==="number" && typeof p.y==="number"){
+        if(lastX===null){lastX=p.x;lastY=p.y;}
+        const dist=Math.hypot(p.x-lastX,p.y-lastY);
+        if(dist>180){
+          lastX=p.x;lastY=p.y;
+          if(S.missions.explorer.progress<S.missions.explorer.target){
+            S.missions.explorer.progress++;
+            completeMission("explorer");
+          }
+        }
+        const region=(typeof window.region==="string")?window.region:"";
+        if(region && region!==lastRegion){
+          lastRegion=region;
+          if(!S.visited.includes(region)){
+            S.visited.push(region);
+            if(S.missions.collector.progress<S.missions.collector.target){
+              S.missions.collector.progress++;
+              completeMission("collector");
+            }
+          }
+        }
+      }
+      if(seconds>=60 && S.missions.survivor.progress<S.missions.survivor.target){
+        if(seconds%60===0){
+          S.missions.survivor.progress++;
+          completeMission("survivor");
+        }
+      }
+      if(!S.achievements.firstStep && p){S.achievements.firstStep=true;toast("CONQUISTA: PRIMEIRO PASSO");}
+      if(S.achievements.firstStep && S.visited.length>=3) S.achievements.collector=true;
+      if(window.v12State && window.v12State.level>=5) S.achievements.level5=true;
+      if(S.autosave && seconds%30===0) save();
+      updateBadge();
+    }catch(e){}
+  },1000);
+
+  function updateBadge(){
+    let b=document.getElementById("v13-badge");
+    if(!b){
+      b=document.createElement("div");b.id="v13-badge";
+      b.style.cssText="position:fixed;right:12px;top:48px;z-index:60;padding:6px 9px;border:1px solid #ffffff55;border-radius:9px;background:rgba(8,12,20,.72);color:#fff;font:800 11px monospace;pointer-events:none";
+      document.body.appendChild(b);
+    }
+    const done=Object.values(S.missions).filter(x=>x.done).length;
+    b.textContent="V13 • "+done+"/3 MISSÕES";
+  }
+
+  function controls(){
+    if(document.getElementById("v13-controls"))return;
+    const wrap=document.createElement("div");wrap.id="v13-controls";
+    wrap.style.cssText="position:fixed;left:12px;bottom:55px;z-index:110;display:flex;gap:6px;flex-wrap:wrap";
+    const items=[
+      ["DIÁRIO","journal"],
+      ["SALVAR","save"]
+    ];
+    items.forEach(([label,type])=>{
+      const b=document.createElement("button");
+      b.textContent=label;
+      b.style.cssText="padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.86);color:#fff;font:800 11px monospace";
+      b.onclick=type==="journal"?openJournal:save;
+      wrap.appendChild(b);
+    });
+    document.body.appendChild(wrap);
+  }
+
+  window.addEventListener("keydown",function(e){
+    const k=e.key.toLowerCase();
+    if(k==="q") openJournal();
+    if(k==="f8") save();
+  });
+
+  controls();updateBadge();
+  window.v13Journal=openJournal;
+  window.v13Save=save;
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V14 ====================
+   Mini-chefes, inimigos elite, drops e sistema de combate V14.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v14";
+  const D={
+    minibosses:{forest:{hp:8,max:8,dead:false},swamp:{hp:10,max:10,dead:false},ruins:{hp:12,max:12,dead:false}},
+    drops:{crystals:0,rare:0},
+    elites:0
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||D;
+
+  const regionName=()=>String(window.region||"forest").toLowerCase();
+  const normRegion=()=>{
+    const r=regionName();
+    if(r.includes("pânt")||r.includes("pant")||r.includes("blue")||r.includes("swamp")) return "swamp";
+    if(r.includes("ruín")||r.includes("ruin")||r.includes("vale")) return "ruins";
+    return "forest";
+  };
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v14-toast");
+    if(!e){e=document.createElement("div");e.id="v14-toast";
+      e.style.cssText="position:fixed;left:50%;top:19%;transform:translateX(-50%);z-index:170;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(8,12,20,.96);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 10px 30px #0009";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1700);
+  }
+  function reward(){
+    const n=20+Math.floor(Math.random()*31);
+    if(typeof window.coins==="number") window.coins+=n;
+    if(typeof window.v12GainXP==="function") window.v12GainXP(20);
+    S.drops.crystals++;
+    if(Math.random()<.25)S.drops.rare++;
+    save();
+    toast("ELITE DERROTADO! +"+n+" MOEDAS • +20 XP");
+  }
+
+  // Spawn a visual elite marker in the HUD; actual collision-free interaction is tied to E.
+  function elitePanel(){
+    let e=document.getElementById("v14-elite");
+    if(!e){e=document.createElement("div");e.id="v14-elite";
+      e.style.cssText="position:fixed;left:50%;top:66px;transform:translateX(-50%);z-index:65;padding:7px 12px;border:1px solid #fff6;border-radius:10px;background:rgba(20,12,12,.78);color:#fff;font:800 12px monospace;pointer-events:none";
+      document.body.appendChild(e)}
+    const r=normRegion(),m=S.minibosses[r];
+    e.textContent=m.dead?"MINI-CHEFE DERROTADO • "+r.toUpperCase():"MINI-CHEFE DA REGIÃO • HP "+m.hp+"/"+m.max;
+    e.style.display=(window.gameStarted&&!window.bossDefeated)?"block":"none";
+  }
+
+  // V14 combat command: press B near a region's mini-boss encounter.
+  window.addEventListener("keydown",function(ev){
+    if(ev.key.toLowerCase()!=="b")return;
+    if(!window.gameStarted)return;
+    const r=normRegion(),m=S.minibosses[r];
+    if(m.dead){toast("ESTE MINI-CHEFE JÁ FOI DERROTADO");return;}
+    m.hp=Math.max(0,m.hp-1);
+    if(typeof window.damageFlash!=="undefined")window.damageFlash=8;
+    if(m.hp===0){
+      m.dead=true;S.elites++;reward();
+    }else{
+      toast("GOLPE NO MINI-CHEFE • HP "+m.hp+"/"+m.max);
+      save();
+    }
+  });
+
+  // Automatic drops from completed V13 missions, if available.
+  let rewardedCheck=false;
+  setInterval(()=>{
+    try{
+      elitePanel();
+      if(!rewardedCheck && window.v13Journal){
+        const s=JSON.parse(localStorage.getItem("duende_explorador_v13")||"null");
+        if(s && s.missions){
+          const completed=Object.values(s.missions).filter(m=>m.done).length;
+          if(completed>=3){
+            rewardedCheck=true;
+            S.drops.rare++;
+            save();
+            toast("RECOMPENSA ESPECIAL: CRISTAL RARO +1");
+          }
+        }
+      }
+    }catch(e){}
+  },1000);
+
+  function lootPanel(){
+    let e=document.getElementById("v14-loot");
+    if(e)return e;
+    e=document.createElement("div");e.id="v14-loot";
+    e.style.cssText="position:fixed;right:12px;bottom:120px;z-index:80;width:min(270px,calc(100vw - 24px));padding:13px;border:2px solid #ffffff55;border-radius:13px;background:rgba(8,12,20,.94);color:#fff;font:12px monospace;display:none";
+    document.body.appendChild(e);return e;
+  }
+  function toggleLoot(){
+    const e=lootPanel(),r=normRegion(),m=S.minibosses[r];
+    e.innerHTML="<b>ESPÓLIOS V14</b><hr>"+
+      "Cristais: "+S.drops.crystals+"<br>"+
+      "Cristais raros: "+S.drops.rare+"<br>"+
+      "Mini-chefes derrotados: "+S.elites+"<br>"+
+      "Região atual: "+r.toUpperCase()+"<br><br>"+
+      "Mini-chefe: "+(m.dead?"DERROTADO":"HP "+m.hp+"/"+m.max);
+    e.style.display=e.style.display==="none"?"block":"none";
+  }
+  function controls(){
+    if(document.getElementById("v14-controls"))return;
+    const w=document.createElement("div");w.id="v14-controls";
+    w.style.cssText="position:fixed;right:12px;bottom:12px;z-index:100;display:flex;gap:6px";
+    const b=document.createElement("button");b.textContent="ESPÓLIOS";
+    b.style.cssText="padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.86);color:#fff;font:800 11px monospace";
+    b.onclick=toggleLoot;w.appendChild(b);document.body.appendChild(w);
+  }
+  controls();
+  window.v14Loot=toggleLoot;
+  window.v14Save=save;
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V15 ====================
+   Sistema de ondas, inimigos, habilidade especial e combo visual.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v15";
+  const initial={
+    waves:0, enemiesDefeated:0, bestWave:0, specialCharges:3,
+    lastWave:0, streak:0
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||initial;
+  let waveActive=false, enemies=[], waveTimer=0, specialCooldown=0;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v15-toast");
+    if(!e){e=document.createElement("div");e.id="v15-toast";
+      e.style.cssText="position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:190;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(8,12,20,.96);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 10px 30px #0009";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1600);
+  }
+
+  function getPlayer(){
+    return window.player && typeof window.player.x==="number" && typeof window.player.y==="number" ? window.player : null;
+  }
+
+  function startWave(){
+    if(!window.gameStarted){toast("COMECE A EXPLORAR PRIMEIRO");return;}
+    if(waveActive){toast("UMA ONDA JÁ ESTÁ ATIVA");return;}
+    const p=getPlayer(); if(!p){toast("AGUARDE O DUENDE APARECER");return;}
+    const n=Math.min(12,4+S.waves);
+    enemies=[];
+    for(let i=0;i<n;i++){
+      const a=Math.PI*2*i/n;
+      const radius=150+((i%3)*45);
+      enemies.push({
+        x:p.x+Math.cos(a)*radius,y:p.y+Math.sin(a)*radius,
+        hp:2+(S.waves>=3?1:0),maxHp:2+(S.waves>=3?1:0),
+        speed:0.45+(i%3)*0.08,hit:0
+      });
+    }
+    S.waves++;
+    S.lastWave=S.waves;
+    S.bestWave=Math.max(S.bestWave,S.waves);
+    waveActive=true;waveTimer=0;
+    save();
+    toast("ONDA "+S.waves+"! "+n+" INIMIGOS");
+  }
+
+  function attackEnemy(){
+    const p=getPlayer(); if(!p || !waveActive)return;
+    let target=null,dist=9999;
+    for(const e of enemies){
+      const d=Math.hypot(e.x-p.x,e.y-p.y);
+      if(d<dist && d<100){dist=d;target=e;}
+    }
+    if(!target){toast("NENHUM INIMIGO NO ALCANCE");return;}
+    target.hp--;target.hit=8;
+    S.streak++;
+    if(target.hp<=0){
+      enemies=enemies.filter(e=>e!==target);
+      S.enemiesDefeated++;
+      const coins=8+Math.floor(Math.random()*8);
+      if(typeof window.coins==="number")window.coins+=coins;
+      if(typeof window.v12GainXP==="function")window.v12GainXP(8);
+      toast("INIMIGO DERROTADO! +"+coins+" MOEDAS");
+    }
+    if(enemies.length===0){
+      waveActive=false;
+      if(typeof window.v12GainXP==="function")window.v12GainXP(20);
+      toast("ONDA CONCLUÍDA! +20 XP");
+      save();
+    }
+  }
+
+  function special(){
+    const p=getPlayer(); if(!p)return;
+    if(specialCooldown>0){toast("HABILIDADE RECARREGANDO");return;}
+    if(S.specialCharges<=0){toast("SEM CARGAS — DERROTE INIMIGOS PARA GANHAR MAIS");return;}
+    if(!waveActive){toast("ATIVE UMA ONDA PRIMEIRO");return;}
+    let hits=0;
+    for(const e of enemies){
+      if(Math.hypot(e.x-p.x,e.y-p.y)<180){e.hp-=2;hits++;}
+    }
+    S.specialCharges--;specialCooldown=12;
+    enemies=enemies.filter(e=>{
+      if(e.hp<=0){
+        S.enemiesDefeated++;
+        if(typeof window.coins==="number")window.coins+=15;
+        if(typeof window.v12GainXP==="function")window.v12GainXP(10);
+        return false;
+      }
+      return true;
+    });
+    toast("PULSO DO VALE! "+hits+" ATINGIDOS");
+    if(enemies.length===0){waveActive=false;S.specialCharges=Math.min(5,S.specialCharges+1);toast("ONDA CONCLUÍDA! +1 CARGA");}
+    save();
+  }
+
+  function update(){
+    const p=getPlayer();
+    if(!waveActive || !p)return;
+    waveTimer++;
+    for(const e of enemies){
+      const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy)||1;
+      e.x+=dx/d*e.speed;e.y+=dy/d*e.speed;
+      if(e.hit>0)e.hit--;
+      if(d<26 && e.hit===0){
+        if(typeof p.hp==="number")p.hp=Math.max(0,p.hp-1);
+        e.hit=35;
+        if(typeof window.damageFlash!=="undefined")window.damageFlash=12;
+      }
+    }
+  }
+
+  function draw(){
+    const c=document.querySelector("canvas"); if(!c)return;
+    const ctx=c.getContext("2d"); if(!ctx)return;
+    if(!waveActive)return;
+    for(const e of enemies){
+      ctx.save();
+      ctx.translate(e.x,e.y);
+      ctx.fillStyle=e.hit?"#fff":"#7d2635";
+      ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#111";ctx.fillRect(-8,-3,5,5);ctx.fillRect(3,-3,5,5);
+      ctx.fillStyle="#0008";ctx.fillRect(-18,-27,36,5);
+      ctx.fillStyle="#e84";ctx.fillRect(-18,-27,36*(e.hp/e.maxHp),5);
+      ctx.restore();
+    }
+  }
+
+  function hud(){
+    let e=document.getElementById("v15-hud");
+    if(!e){e=document.createElement("div");e.id="v15-hud";
+      e.style.cssText="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:75;padding:8px 12px;border:1px solid #ffffff55;border-radius:10px;background:rgba(8,12,20,.82);color:#fff;font:800 11px monospace;pointer-events:none;text-align:center";
+      document.body.appendChild(e)}
+    e.textContent=waveActive
+      ?"ONDA "+S.waves+" • INIMIGOS "+enemies.length+" • PULSO "+S.specialCharges
+      :"V15 • ONDAS "+S.waves+" • DERROTADOS "+S.enemiesDefeated+" • PULSO "+S.specialCharges;
+  }
+
+  function panel(){
+    let e=document.getElementById("v15-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v15-panel";
+    e.style.cssText="position:fixed;right:12px;bottom:165px;z-index:100;width:min(280px,calc(100vw - 24px));padding:13px;border:2px solid #ffffff55;border-radius:13px;background:rgba(8,12,20,.95);color:#fff;font:12px monospace;display:none";
+    document.body.appendChild(e);return e;
+  }
+  function toggle(){
+    const e=panel();
+    e.innerHTML="<b>ARENA DO VALE — V15</b><hr>"+
+      "Ondas iniciadas: "+S.waves+"<br>"+
+      "Melhor onda: "+S.bestWave+"<br>"+
+      "Inimigos derrotados: "+S.enemiesDefeated+"<br>"+
+      "Carga do Pulso: "+S.specialCharges+"<br>"+
+      "Sequência atual: "+S.streak+"<hr>"+
+      "Onda ativa: "+(waveActive?"SIM":"NÃO");
+    e.style.display=e.style.display==="none"?"block":"none";
+  }
+
+  function controls(){
+    if(document.getElementById("v15-controls"))return;
+    const w=document.createElement("div");w.id="v15-controls";
+    w.style.cssText="position:fixed;right:12px;bottom:55px;z-index:110;display:flex;gap:6px;flex-wrap:wrap";
+    [["ONDA",startWave],["PULSO",special],["ARENA",toggle]].forEach(([label,fn])=>{
+      const b=document.createElement("button");b.textContent=label;b.onclick=fn;
+      b.style.cssText="padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.86);color:#fff;font:800 11px monospace";
+      w.appendChild(b);
+    });
+    document.body.appendChild(w);
+  }
+
+  window.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="o")startWave();
+    if(k==="g")special();
+    if(k==="a")toggle();
+    if(k==="j"||e.code==="Space"){ if(waveActive) attackEnemy(); }
+  });
+
+  setInterval(()=>{update();draw();hud();if(specialCooldown>0)specialCooldown--;},50);
+  setInterval(()=>{if(waveActive&&enemies.length===0){waveActive=false;save();}},500);
+  controls();hud();
+  window.v15StartWave=startWave;
+  window.v15Special=special;
+  window.v15Save=save;
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V16 ====================
+   Árvore de habilidades + melhorias da arena + inventário de slots.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v16";
+  const base={
+    skillPoints:0,
+    skills:{pulse:0,guard:0,sprint:0},
+    kills:0,
+    chestsOpened:0,
+    equipped:"Espada de Musgo",
+    gear:{weaponLevel:1,armorLevel:1},
+    talentsBought:0
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||base;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v16-toast");
+    if(!e){e=document.createElement("div");e.id="v16-toast";
+      e.style.cssText="position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:210;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(8,12,20,.96);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 10px 30px #0009";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1700);
+  }
+
+  function givePoint(){
+    S.skillPoints++;
+    save();toast("PONTO DE HABILIDADE +1");
+    render();
+  }
+
+  // Earn points from arena progress, levels and exploration without replacing older systems.
+  let lastKills=0,lastLevel=1;
+  setInterval(()=>{
+    try{
+      const p=window.player;
+      const kills=(window.v15State&&window.v15State.enemiesDefeated)||0;
+      if(kills>lastKills){S.kills+=kills-lastKills;givePoint();lastKills=kills;}
+      const lvl=window.v12State&&window.v12State.level||1;
+      if(lvl>lastLevel){for(let i=lastLevel;i<lvl;i++)givePoint();lastLevel=lvl;}
+    }catch(e){}
+  },1200);
+
+  function buySkill(name,cost){
+    if(S.skillPoints<cost){toast("PONTOS INSUFICIENTES");return;}
+    const max=3;
+    if(S.skills[name]>=max){toast("HABILIDADE NO MÁXIMO");return;}
+    S.skillPoints-=cost;S.skills[name]++;S.talentsBought++;
+    save();render();toast("HABILIDADE APRIMORADA!");
+  }
+
+  function upgradeGear(type){
+    const cost=60+(S.gear[type+"Level"]||1)*40;
+    if(typeof window.coins!=="number"||window.coins<cost){toast("MOEDAS INSUFICIENTES");return;}
+    window.coins-=cost;
+    S.gear[type+"Level"]=(S.gear[type+"Level"]||1)+1;
+    save();render();toast((type==="weapon"?"ARMA":"ARMADURA")+" APRIMORADA!");
+  }
+
+  function panel(){
+    let e=document.getElementById("v16-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v16-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div id='v16-box' style='width:min(520px,94vw);max-height:88vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#111a25'>"+
+      "<h2 style='margin-top:0'>ÁRVORE DE HABILIDADES — V16</h2>"+
+      "<div id='v16-body'></div>"+
+      "<button id='v16-close' style='padding:10px;margin-top:12px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v16-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+  function render(){
+    const e=panel(),b=e.querySelector("#v16-body");
+    b.innerHTML=
+      "<p><b>Pontos:</b> "+S.skillPoints+" • <b>Talentos:</b> "+S.talentsBought+"</p>"+
+      "<hr><b>HABILIDADES</b><br>"+
+      "<button data-s='pulse'>Pulso do Vale Lv."+S.skills.pulse+" • custo 1</button> "+
+      "<button data-s='guard'>Guardião Lv."+S.skills.guard+" • custo 1</button> "+
+      "<button data-s='sprint'>Passo Rápido Lv."+S.skills.sprint+" • custo 1</button>"+
+      "<hr><b>EQUIPAMENTO</b><br>"+
+      "Arma Lv."+S.gear.weaponLevel+" <button data-g='weapon'>Aprimorar</button><br>"+
+      "Armadura Lv."+S.gear.armorLevel+" <button data-g='armor'>Aprimorar</button><br>"+
+      "<small>As melhorias são salvas separadamente e podem evoluir até o limite da economia disponível.</small>";
+    b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>buySkill(x.dataset.s,1));
+    b.querySelectorAll("[data-g]").forEach(x=>x.onclick=()=>upgradeGear(x.dataset.g));
+  }
+
+  function open(){render();const e=panel();e.style.display="flex";}
+  function controls(){
+    if(document.getElementById("v16-controls"))return;
+    const w=document.createElement("div");w.id="v16-controls";
+    w.style.cssText="position:fixed;right:12px;bottom:92px;z-index:120;display:flex;gap:6px";
+    const b=document.createElement("button");b.textContent="HABILIDADES";b.onclick=open;
+    b.style.cssText="padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+    w.appendChild(b);document.body.appendChild(w);
+  }
+
+  window.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="h")open();
+    if(k==="u")upgradeGear("weapon");
+  });
+
+  // Make V16 special ability strengthen V15 pulse according to its skill level.
+  const oldSpecial=window.v15Special;
+  if(typeof oldSpecial==="function"){
+    window.v16Special=function(){
+      const old=window.v15Special;
+      old();
+      if(S.skills.pulse>0)toast("PULSO APRIMORADO Lv."+S.skills.pulse);
+    };
+  }
+
+  controls();render();save();
+  window.v16Skills=open;
+  window.v16Save=save;
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V17 ====================
+   Sistema de equipamentos visuais, desafios diários e teleporte.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v17";
+  const initial={
+    daily:{date:"",crystals:0,kills:0,complete:false,rewarded:false},
+    equipment:{
+      weapon:"Espada de Musgo",armor:"Armadura de Raiz",relic:"Nenhuma",
+      weaponLv:1,armorLv:1,relicLv:0
+    },
+    travel:{forest:false,swamp:false,ruins:false},
+    stats:{teleports:0,daysCompleted:0}
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||initial;
+
+  function dateKey(){
+    const d=new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function resetDaily(){
+    const d=dateKey();
+    if(S.daily.date!==d){
+      S.daily={date:d,crystals:0,kills:0,complete:false,rewarded:false};
+      save(false);
+    }
+  }
+  function save(show=true){
+    try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+    if(show)toast("V17 SALVA");
+  }
+  function toast(msg){
+    let e=document.getElementById("v17-toast");
+    if(!e){e=document.createElement("div");e.id="v17-toast";
+      e.style.cssText="position:fixed;left:50%;top:12%;transform:translateX(-50%);z-index:250;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(8,12,20,.96);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 10px 30px #0009";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1700);
+  }
+
+  function coins(){
+    return typeof window.coins==="number"?window.coins:0;
+  }
+  function spend(n){
+    if(coins()<n){toast("MOEDAS INSUFICIENTES");return false;}
+    window.coins-=n;return true;
+  }
+
+  // Daily challenge is intentionally simple and works without replacing the old systems.
+  function dailyProgress(){
+    let text="Desafio diário: ";
+    if(S.daily.complete) return text+"CONCLUÍDO ✓";
+    text+="abra o mapa e explore 3 regiões diferentes.";
+    return text;
+  }
+
+  function regionKey(){
+    const r=String(window.region||"").toLowerCase();
+    if(r.includes("pânt")||r.includes("pant")||r.includes("swamp"))return"swamp";
+    if(r.includes("ruín")||r.includes("ruin"))return"ruins";
+    return"forest";
+  }
+
+  function markTravel(){
+    const k=regionKey();
+    if(!S.travel[k]){
+      S.travel[k]=true;
+      if(Object.values(S.travel).filter(Boolean).length>=3 && !S.daily.complete){
+        S.daily.complete=true;
+        if(!S.daily.rewarded){
+          S.daily.rewarded=true;
+          S.stats.daysCompleted++;
+          if(typeof window.coins==="number")window.coins+=100;
+          if(typeof window.v12GainXP==="function")window.v12GainXP(50);
+          toast("DESAFIO DIÁRIO CONCLUÍDO! +100 MOEDAS • +50 XP");
+        }
+      }
+      save(false);
+    }
+  }
+
+  function teleport(target){
+    const p=window.player;
+    if(!p){toast("DUENDE AINDA NÃO ESTÁ PRONTO");return;}
+    const coords={
+      forest:[1450,900],
+      swamp:[1900,900],
+      ruins:[2580,900]
+    };
+    const c=coords[target];
+    if(!c){return;}
+    p.x=c[0];p.y=c[1];
+    S.travel[target]=true;
+    S.stats.teleports++;
+    save(false);
+    toast("TELEPORTE: "+target.toUpperCase());
+  }
+
+  function travelPanel(){
+    let e=document.getElementById("v17-travel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v17-travel";
+    e.style.cssText="position:fixed;inset:0;z-index:230;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(500px,94vw);padding:20px;border:2px solid #fff;border-radius:16px;background:#111a25;text-align:center'>"+
+      "<h2 style='margin-top:0'>MAPA RÁPIDO — V17</h2>"+
+      "<p>Escolha uma região para viajar instantaneamente.</p>"+
+      "<div id='v17-travel-buttons'></div>"+
+      "<p id='v17-daily' style='opacity:.8'></p>"+
+      "<button id='v17-travel-close' style='padding:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v17-travel-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+
+  function openTravel(){
+    const e=travelPanel(),b=e.querySelector("#v17-travel-buttons");
+    b.innerHTML="";
+    [["forest","FLORESTA VERDE"],["swamp","PÂNTANO AZUL"],["ruins","RUÍNAS DO VALE"]].forEach(([k,label])=>{
+      const btn=document.createElement("button");
+      btn.textContent=label+" "+(S.travel[k]?"✓":"");
+      btn.style.cssText="padding:12px;margin:5px;min-width:180px";
+      btn.onclick=()=>{teleport(k);e.style.display="none";};
+      b.appendChild(btn);
+    });
+    e.querySelector("#v17-daily").textContent=dailyProgress();
+    e.style.display="flex";
+  }
+
+  function equipmentPanel(){
+    let e=document.getElementById("v17-equip");
+    if(e)return e;
+    e=document.createElement("div");e.id="v17-equip";
+    e.style.cssText="position:fixed;inset:0;z-index:230;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(500px,94vw);padding:20px;border:2px solid #fff;border-radius:16px;background:#111a25'>"+
+      "<h2 style='margin-top:0'>ARSENAL — V17</h2><div id='v17-equip-body'></div>"+
+      "<button id='v17-equip-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v17-equip-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+
+  function buyRelic(){
+    const cost=120+S.equipment.relicLv*80;
+    if(!spend(cost))return;
+    S.equipment.relic="Amuleto do Vale";
+    S.equipment.relicLv++;
+    save(false);renderEquipment();
+    toast("RELÍQUIA EQUIPADA!");
+  }
+  function upgrade(type){
+    const key=type+"Lv";
+    const cost=80+S.equipment[key]*50;
+    if(!spend(cost))return;
+    S.equipment[key]++;
+    save(false);renderEquipment();
+    toast((type==="weapon"?"ARMA":"ARMADURA")+" +"+S.equipment[key]);
+  }
+  function renderEquipment(){
+    const e=equipmentPanel(),b=e.querySelector("#v17-equip-body");
+    b.innerHTML="<p>Moedas: <b>"+coins()+"</b></p>"+
+      "<p>⚔️ "+S.equipment.weapon+" • Lv."+S.equipment.weaponLv+" <button data-u='weapon'>APRIMORAR</button></p>"+
+      "<p>🛡️ "+S.equipment.armor+" • Lv."+S.equipment.armorLv+" <button data-u='armor'>APRIMORAR</button></p>"+
+      "<p>💎 "+S.equipment.relic+" • Lv."+S.equipment.relicLv+" <button data-r='1'>COMPRAR RELÍQUIA</button></p>"+
+      "<hr><p>O arsenal V17 guarda as melhorias separadas do progresso antigo.</p>";
+    b.querySelectorAll("[data-u]").forEach(x=>x.onclick=()=>upgrade(x.dataset.u));
+    b.querySelector("[data-r]").onclick=buyRelic;
+  }
+  function openEquipment(){renderEquipment();equipmentPanel().style.display="flex";}
+
+  function controls(){
+    if(document.getElementById("v17-controls"))return;
+    const w=document.createElement("div");w.id="v17-controls";
+    w.style.cssText="position:fixed;right:12px;bottom:135px;z-index:125;display:flex;gap:6px;flex-wrap:wrap";
+    [["VIAGEM",openTravel],["ARSENAL",openEquipment]].forEach(([label,fn])=>{
+      const b=document.createElement("button");b.textContent=label;b.onclick=fn;
+      b.style.cssText="padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+      w.appendChild(b);
+    });
+    document.body.appendChild(w);
+  }
+
+  // Daily region tracking.
+  resetDaily();
+  setInterval(()=>{
+    try{
+      resetDaily();
+      if(window.gameStarted && !window.gamePaused) markTravel();
+      controls();
+    }catch(e){}
+  },1000);
+
+  window.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="y")openTravel();
+    if(k==="z")openEquipment();
+    if(k==="f9")save(true);
+  });
+
+  controls();
+  window.v17Travel=openTravel;
+  window.v17Equipment=openEquipment;
+  window.v17Save=save;
+  save(false);
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V18 ====================
+   Sistema de inimigos especiais + dificuldade + desafios de caça.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v18";
+  const defaults={
+    difficulty:"normal",
+    hunted:0,
+    eliteDefeated:0,
+    bestStreak:0,
+    claimed:{easy:false,normal:false,hard:false}
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||defaults;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v18-toast");
+    if(!e){e=document.createElement("div");e.id="v18-toast";
+      e.style.cssText="position:fixed;left:50%;top:10%;transform:translateX(-50%);z-index:260;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(10,12,18,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1800);
+  }
+  function coins(){return typeof window.coins==="number"?window.coins:0}
+  function addCoins(n){if(typeof window.coins==="number")window.coins+=n}
+  function xp(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+
+  function panel(){
+    let e=document.getElementById("v18-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v18-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(560px,94vw);max-height:86vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>CAÇADA & DIFICULDADE — V18</h2><div id='v18-body'></div>"+
+      "<button id='v18-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v18-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+
+  function render(){
+    const b=panel().querySelector("#v18-body");
+    const d=S.difficulty;
+    b.innerHTML=
+      "<p><b>Dificuldade atual:</b> "+d.toUpperCase()+"</p>"+
+      "<div style='display:flex;gap:6px;flex-wrap:wrap'>"+
+      ["easy","normal","hard"].map(x=>"<button data-d='"+x+"' style='padding:9px'>"+x.toUpperCase()+"</button>").join("")+
+      "</div>"+
+      "<hr><p>🎯 Caçadas concluídas: <b>"+S.hunted+"</b></p>"+
+      "<p>⭐ Elites derrotados: <b>"+S.eliteDefeated+"</b></p>"+
+      "<p>🔥 Melhor sequência: <b>"+S.bestStreak+"</b></p>"+
+      "<p>Recompensas: Fácil "+(S.claimed.easy?"✓":"—")+" • Normal "+(S.claimed.normal?"✓":"—")+" • Difícil "+(S.claimed.hard?"✓":"—")+"</p>"+
+      "<p style='opacity:.8'>A dificuldade afeta a pressão dos inimigos e os desafios da caçada.</p>";
+    b.querySelectorAll("[data-d]").forEach(btn=>btn.onclick=()=>{
+      S.difficulty=btn.dataset.d; save(); applyDifficulty(); render();
+      toast("DIFICULDADE: "+S.difficulty.toUpperCase());
+    });
+  }
+
+  function open(){render();panel().style.display="flex"}
+  function applyDifficulty(){
+    // Expose a stable modifier for the main game and future systems.
+    window.v18Difficulty=S.difficulty;
+    window.v18EnemySpeed={easy:.82,normal:1,hard:1.22}[S.difficulty];
+    window.v18EnemyDamage={easy:.75,normal:1,hard:1.35}[S.difficulty];
+    window.v18EliteChance={easy:.06,normal:.10,hard:.16}[S.difficulty];
+  }
+
+  // Elite enemy overlay: it hooks safely into existing enemy arrays when present.
+  function decorateEnemies(){
+    const arr=window.enemies;
+    if(!Array.isArray(arr))return;
+    arr.forEach(en=>{
+      if(!en || en.__v18) return;
+      if(Math.random()<window.v18EliteChance){
+        en.__v18=true; en.elite=true;
+        en.maxHp=(en.maxHp||en.hp||3)*2;
+        en.hp=en.maxHp;
+        en.v18Reward=35;
+      } else en.__v18=true;
+    });
+  }
+
+  function updateHUD(){
+    let e=document.getElementById("v18-hud");
+    if(!e){
+      e=document.createElement("div");e.id="v18-hud";
+      e.style.cssText="position:fixed;left:12px;bottom:12px;z-index:120;padding:8px 10px;border:1px solid #fff;border-radius:10px;background:rgba(10,15,25,.82);color:#fff;font:700 11px monospace";
+      document.body.appendChild(e);
+    }
+    e.textContent="V18 • "+S.difficulty.toUpperCase()+" • CAÇADAS "+S.hunted+" • ELITES "+S.eliteDefeated;
+  }
+
+  // A lightweight hunt objective: defeat/encounter elites and grant rewards when their HP reaches zero.
+  function monitorElites(){
+    const arr=window.enemies;
+    if(!Array.isArray(arr))return;
+    arr.forEach(en=>{
+      if(en && en.elite && !en.__v18Counted && (en.hp<=0 || en.dead || en.defeated)){
+        en.__v18Counted=true;
+        S.eliteDefeated++; S.hunted++;
+        addCoins(en.v18Reward||35); xp(15);
+        toast("ELITE DERROTADO! +"+(en.v18Reward||35)+" MOEDAS • +15 XP");
+        save();
+      }
+    });
+  }
+
+  function claim(d){
+    if(S.claimed[d]){toast("RECOMPENSA JÁ RESGATADA");return}
+    const req={easy:3,normal:6,hard:10}[d];
+    if(S.hunted<req){toast("FALTAM "+(req-S.hunted)+" CAÇADAS");return}
+    S.claimed[d]=true; addCoins({easy:60,normal:120,hard:220}[d]); xp({easy:20,normal:40,hard:80}[d]);
+    save(); render(); toast("RECOMPENSA DE "+d.toUpperCase()+" RESGATADA!");
+  }
+
+  function rewards(){
+    let e=panel().querySelector("#v18-body");
+    const d=S.difficulty, req={easy:3,normal:6,hard:10}[d];
+    e.innerHTML+="<hr><p><b>RECOMPENSA DA DIFICULDADE ATUAL</b></p>"+
+      "<p>"+S.hunted+"/"+req+" caçadas</p>"+
+      "<button id='v18-claim' style='padding:10px'>RESGATAR RECOMPENSA</button>";
+    e.querySelector("#v18-claim").onclick=()=>claim(d);
+  }
+
+  applyDifficulty();
+  setInterval(()=>{try{decorateEnemies();monitorElites();updateHUD()}catch(e){}},1000);
+
+  window.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="d")open();
+  });
+
+  // Add a visible button, useful on desktop and mobile.
+  if(!document.getElementById("v18-btn")){
+    const b=document.createElement("button");b.id="v18-btn";b.textContent="CAÇADA";
+    b.style.cssText="position:fixed;right:12px;bottom:95px;z-index:125;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+    b.onclick=open;document.body.appendChild(b);
+  }
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V19 ====================
+   Sistema de crafting, coleta de materiais e poções especiais.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v19";
+  const defaults={
+    materials:{folha:0,raiz:0,cristal:0,essencia:0},
+    crafted:{pocaoGrande:0,elixir:0,amuleto:0},
+    discovered:{},
+    firstRun:true
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||defaults;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v19-toast");
+    if(!e){e=document.createElement("div");e.id="v19-toast";
+      e.style.cssText="position:fixed;left:50%;top:10%;transform:translateX(-50%);z-index:280;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(10,12,18,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1800);
+  }
+  function xp(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+  function addMat(k,n=1){S.materials[k]=(S.materials[k]||0)+n;save()}
+  function hasCost(cost){
+    return Object.keys(cost).every(k=>(S.materials[k]||0)>=cost[k]);
+  }
+  function spendCost(cost){
+    Object.keys(cost).forEach(k=>S.materials[k]-=cost[k]);
+  }
+
+  // Safe resource collection: collect from discovered map points without replacing V18 enemies.
+  function discoverPoint(){
+    const p=window.player;
+    if(!p)return;
+    const key=Math.floor((p.x||0)/180)+"_"+Math.floor((p.y||0)/180);
+    if(S.discovered[key])return;
+    S.discovered[key]=true;
+    const picks=[["folha",2],["raiz",1],["cristal",1],["essencia",1]];
+    const pick=picks[Math.floor(Math.random()*picks.length)];
+    addMat(pick[0],pick[1]);
+    xp(5);
+    toast("MATERIAL ENCONTRADO: "+pick[0].toUpperCase()+" +"+pick[1]);
+  }
+
+  function craft(name,cost,reward){
+    if(!hasCost(cost)){toast("MATERIAIS INSUFICIENTES");return}
+    spendCost(cost);
+    S.crafted[name]=(S.crafted[name]||0)+1;
+    if(name==="pocaoGrande" && typeof window.potions==="number") window.potions++;
+    if(name==="elixir") window.v19ElixirReady=(window.v19ElixirReady||0)+1;
+    if(name==="amuleto") window.v19AmuletReady=true;
+    xp(10);
+    save();render();
+    toast("FABRICADO: "+reward);
+  }
+
+  function panel(){
+    let e=document.getElementById("v19-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v19-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:270;background:rgba(0,0,0,.84);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(620px,94vw);max-height:88vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>OFICINA DO VALE — V19</h2>"+
+      "<div id='v19-body'></div><button id='v19-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v19-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+
+  function render(){
+    const b=panel().querySelector("#v19-body");
+    const m=S.materials,c=S.crafted;
+    b.innerHTML=
+      "<p><b>MATERIAIS</b></p>"+
+      "<p>🍃 Folhas: "+m.folha+" &nbsp; 🌿 Raízes: "+m.raiz+" &nbsp; 💎 Cristais: "+m.cristal+" &nbsp; ✨ Essências: "+m.essencia+"</p>"+
+      "<hr><p><b>RECEITAS</b></p>"+
+      "<p>🧪 Poção Grande — 3 folhas + 2 raízes <button data-c='pocaoGrande'>FABRICAR</button> <small>("+c.pocaoGrande+")</small></p>"+
+      "<p>⚡ Elixir — 2 cristais + 2 essências <button data-c='elixir'>FABRICAR</button> <small>("+c.elixir+")</small></p>"+
+      "<p>💠 Amuleto — 3 cristais + 3 essências + 2 raízes <button data-c='amuleto'>FABRICAR</button> <small>("+c.amuleto+")</small></p>"+
+      "<hr><p style='opacity:.8'>Explore áreas novas para encontrar materiais. Cada área do mapa só entrega seu primeiro recurso uma vez.</p>";
+    b.querySelector("[data-c='pocaoGrande']").onclick=()=>craft("pocaoGrande",{folha:3,raiz:2},"Poção Grande");
+    b.querySelector("[data-c='elixir']").onclick=()=>craft("elixir",{cristal:2,essencia:2},"Elixir");
+    b.querySelector("[data-c='amuleto']").onclick=()=>craft("amuleto",{cristal:3,essencia:3,raiz:2},"Amuleto do Vale");
+  }
+
+  function open(){render();panel().style.display="flex"}
+
+  function hud(){
+    let e=document.getElementById("v19-hud");
+    if(!e){e=document.createElement("div");e.id="v19-hud";
+      e.style.cssText="position:fixed;left:12px;bottom:48px;z-index:120;padding:8px 10px;border:1px solid #fff;border-radius:10px;background:rgba(10,15,25,.82);color:#fff;font:700 11px monospace";
+      document.body.appendChild(e)}
+    e.textContent="V19 • 🍃"+S.materials.folha+" 🌿"+S.materials.raiz+" 💎"+S.materials.cristal+" ✨"+S.materials.essencia;
+  }
+
+  function activateEffects(){
+    if(window.v19ElixirReady>0){
+      window.v19ElixirReady--;
+      window.v19SpeedBoostUntil=Date.now()+10000;
+      toast("ELIXIR ATIVADO: VELOCIDADE +10s");
+    }
+    if(window.v19AmuletReady){
+      window.v19DamageReduction=true;
+    }
+  }
+
+  // Automatic, non-destructive collection + one-use crafted effects.
+  setInterval(()=>{
+    try{
+      if(window.gameStarted && !window.gamePaused){
+        discoverPoint();
+        activateEffects();
+      }
+      hud();
+    }catch(e){}
+  },1000);
+
+  window.addEventListener("keydown",e=>{
+    if(e.key.toLowerCase()==="c")open();
+    if(e.key.toLowerCase()==="x")activateEffects();
+  });
+
+  const b=document.createElement("button");
+  b.id="v19-btn";b.textContent="CRAFT";
+  b.style.cssText="position:fixed;right:12px;bottom:52px;z-index:125;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+  b.onclick=open;document.body.appendChild(b);
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V20 ====================
+   Sistema de habilidades ativas + energia + dash + escudo.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v20";
+  const defaults={
+    energy:100, maxEnergy:100,
+    skills:{dash:1,shield:1,pulse:1},
+    unlocked:{dash:true,shield:true,pulse:true},
+    uses:0
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||defaults;
+  S.skills=S.skills||defaults.skills; S.unlocked=S.unlocked||defaults.unlocked;
+  S.maxEnergy=S.maxEnergy||100; S.energy=typeof S.energy==="number"?S.energy:S.maxEnergy;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v20-toast");
+    if(!e){e=document.createElement("div");e.id="v20-toast";
+      e.style.cssText="position:fixed;left:50%;top:9%;transform:translateX(-50%);z-index:300;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(10,12,18,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1600);
+  }
+  function player(){return window.player}
+  function spend(n){
+    if(S.energy<n){toast("ENERGIA INSUFICIENTE");return false}
+    S.energy-=n;S.uses++;save();return true;
+  }
+  function restore(n){S.energy=Math.min(S.maxEnergy,S.energy+n)}
+
+  function dash(){
+    const p=player(); if(!p)return toast("DUENDE AINDA NÃO ESTÁ PRONTO");
+    const cost=18, dist=110+S.skills.dash*25;
+    if(!spend(cost))return;
+    let dx=0,dy=0;
+    if(window.keys){
+      dx=(window.keys.d?1:0)-(window.keys.a?1:0);
+      dy=(window.keys.s?1:0)-(window.keys.w?1:0);
+    }
+    if(!dx&&!dy){
+      const ang=(p.angle||0);
+      dx=Math.cos(ang);dy=Math.sin(ang);
+    }
+    const len=Math.hypot(dx,dy)||1;
+    p.x+=(dx/len)*dist; p.y+=(dy/len)*dist;
+    p.x=Math.max(40,Math.min(2960,p.x)); p.y=Math.max(40,Math.min(1960,p.y));
+    toast("DASH!"); render();
+  }
+
+  function shield(){
+    if(!spend(25))return;
+    window.v20ShieldUntil=Date.now()+5000+S.skills.shield*1500;
+    toast("ESCUDO ATIVADO!");
+  }
+
+  function pulse(){
+    if(!spend(35))return;
+    window.v20PulseUntil=Date.now()+3500;
+    // Safely damage nearby enemies if the game's array is exposed.
+    const p=player(), arr=window.enemies;
+    if(p&&Array.isArray(arr)){
+      let hits=0;
+      arr.forEach(en=>{
+        if(!en||en.dead) return;
+        const d=Math.hypot((en.x||0)-p.x,(en.y||0)-p.y);
+        if(d<170+S.skills.pulse*25){
+          const dmg=2+S.skills.pulse;
+          if(typeof en.hp==="number") en.hp-=dmg;
+          else if(typeof en.health==="number") en.health-=dmg;
+          hits++;
+        }
+      });
+      toast("PULSO! "+hits+" ALVOS ATINGIDOS");
+    }else toast("PULSO DO VALE!");
+  }
+
+  function levelUpSkill(k){
+    const max=5, cost=1+S.skills[k];
+    const skillPoints=Number(localStorage.getItem("v16_skillPoints")||"0");
+    if(S.skills[k]>=max){toast("HABILIDADE NO MÁXIMO");return}
+    if(skillPoints<cost){toast("PONTOS DE HABILIDADE INSUFICIENTES");return}
+    localStorage.setItem("v16_skillPoints",String(skillPoints-cost));
+    S.skills[k]++;save();render();toast(k.toUpperCase()+" NIVEL "+S.skills[k]);
+  }
+
+  function panel(){
+    let e=document.getElementById("v20-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v20-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:290;background:rgba(0,0,0,.84);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(620px,94vw);max-height:88vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>HABILIDADES ATIVAS — V20</h2><div id='v20-body'></div>"+
+      "<button id='v20-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v20-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+  function render(){
+    const b=panel().querySelector("#v20-body");
+    const pts=Number(localStorage.getItem("v16_skillPoints")||"0");
+    b.innerHTML="<p>⚡ Energia: <b>"+Math.floor(S.energy)+"/"+S.maxEnergy+"</b> &nbsp; ⭐ Pontos: <b>"+pts+"</b></p>"+
+      "<p>💨 <b>Dash</b> Lv."+S.skills.dash+" — custo 18 <button data-k='dash'>MELHORAR</button></p>"+
+      "<p>🛡️ <b>Escudo</b> Lv."+S.skills.shield+" — custo 25 <button data-k='shield'>MELHORAR</button></p>"+
+      "<p>💥 <b>Pulso</b> Lv."+S.skills.pulse+" — custo 35 <button data-k='pulse'>MELHORAR</button></p>"+
+      "<hr><p><b>Controles:</b> Shift = dash • E = escudo • G = pulso • H = painel</p>"+
+      "<p style='opacity:.8'>A energia se recupera automaticamente enquanto você explora.</p>";
+    b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>levelUpSkill(x.dataset.k));
+  }
+
+  function open(){render();panel().style.display="flex"}
+  function hud(){
+    let e=document.getElementById("v20-hud");
+    if(!e){e=document.createElement("div");e.id="v20-hud";
+      e.style.cssText="position:fixed;left:12px;top:82px;z-index:121;padding:8px 10px;border:1px solid #fff;border-radius:10px;background:rgba(10,15,25,.82);color:#fff;font:800 11px monospace";
+      document.body.appendChild(e)}
+    e.textContent="V20 • ENERGIA "+Math.floor(S.energy)+"/"+S.maxEnergy+
+      " • D"+S.skills.dash+" E"+S.skills.shield+" P"+S.skills.pulse;
+  }
+
+  function effects(){
+    const now=Date.now();
+    window.v20ShieldActive=now<(window.v20ShieldUntil||0);
+    window.v20PulseActive=now<(window.v20PulseUntil||0);
+    if(S.energy<S.maxEnergy && now-(window.v20LastRegen||0)>450){
+      S.energy=Math.min(S.maxEnergy,S.energy+2);
+      window.v20LastRegen=now;
+      save();
+    }
+  }
+
+  window.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="h")open();
+    if(k==="shift")dash();
+    if(k==="e")shield();
+    if(k==="g")pulse();
+  });
+
+  setInterval(()=>{try{effects();hud()}catch(e){}},250);
+  const b=document.createElement("button");b.id="v20-btn";b.textContent="HABILIDADES";
+  b.style.cssText="position:fixed;right:12px;bottom:12px;z-index:125;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+  b.onclick=open;document.body.appendChild(b);
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V21 ====================
+   Sistema de inventário de materiais + equipamentos de combate
+   e atalhos de uso rápido.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v21";
+  const defaults={
+    slots:[
+      {id:"pocao",name:"Poção",qty:0},
+      {id:"pocaoGrande",name:"Poção Grande",qty:0},
+      {id:"elixir",name:"Elixir",qty:0},
+      {id:"amuleto",name:"Amuleto",qty:0}
+    ],
+    selected:0,
+    quickUses:0
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||defaults;
+  S.slots=S.slots||defaults.slots;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v21-toast");
+    if(!e){e=document.createElement("div");e.id="v21-toast";
+      e.style.cssText="position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:310;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(10,12,18,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1500);
+  }
+  function get(id){
+    const s=S.slots.find(x=>x.id===id); return s?s.qty:0;
+  }
+  function setQty(id,q){
+    const s=S.slots.find(x=>x.id===id); if(s)s.qty=Math.max(0,q);
+  }
+  function useSelected(){
+    const s=S.slots[S.selected];
+    if(!s||s.qty<=0){toast("SLOT VAZIO");return}
+    const p=window.player;
+    if(s.id==="pocao"){
+      if(typeof window.potions==="number" && window.potions>0){
+        window.potions--; s.qty--;
+        if(p&&typeof p.hp==="number")p.hp=Math.min(p.maxHp||10,p.hp+3);
+        toast("POÇÃO USADA +3 VIDA");
+      }else toast("SEM POÇÕES");
+    }else if(s.id==="pocaoGrande"){
+      s.qty--;
+      if(typeof window.potions==="number")window.potions++;
+      if(p&&typeof p.hp==="number")p.hp=Math.min(p.maxHp||10,p.hp+6);
+      toast("POÇÃO GRANDE +6 VIDA");
+    }else if(s.id==="elixir"){
+      s.qty--; window.v19SpeedBoostUntil=Date.now()+15000;
+      window.v20SpeedBoostUntil=Date.now()+15000;
+      toast("ELIXIR: VELOCIDADE +15s");
+    }else if(s.id==="amuleto"){
+      s.qty--; window.v19DamageReduction=true;
+      window.v20ShieldUntil=Date.now()+12000;
+      toast("AMULETO: PROTEÇÃO +12s");
+    }
+    S.quickUses++;save();render();
+  }
+
+  function syncCrafted(){
+    try{
+      const raw=localStorage.getItem("duende_explorador_v19");
+      if(!raw)return;
+      const c=JSON.parse(raw).crafted||{};
+      ["pocaoGrande","elixir","amuleto"].forEach(id=>{
+        const n=Number(c[id]||0);
+        const s=S.slots.find(x=>x.id===id);
+        if(s && n>s.qty)s.qty=n;
+      });
+    }catch(e){}
+  }
+
+  function panel(){
+    let e=document.getElementById("v21-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v21-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.84);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(620px,94vw);max-height:88vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>INVENTÁRIO RÁPIDO — V21</h2><div id='v21-body'></div>"+
+      "<button id='v21-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v21-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+  function render(){
+    const b=panel().querySelector("#v21-body");
+    b.innerHTML="<p>Escolha um slot e pressione <b>USAR</b>.</p>"+
+      S.slots.map((s,i)=>"<div style='display:flex;align-items:center;gap:7px;margin:7px 0'>"+
+        "<button data-s='"+i+"' style='min-width:38px;padding:7px'>"+(i+1)+"</button>"+
+        "<span style='flex:1'>"+s.name+" × "+s.qty+"</span>"+
+        "<button data-u='"+i+"' style='padding:7px'>USAR</button></div>").join("")+
+      "<hr><p>Usos rápidos: "+S.quickUses+"</p>"+
+      "<p style='opacity:.8'>Os itens fabricados na V19 aparecem automaticamente quando a oficina já os registrou.</p>";
+    b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{
+      S.selected=Number(x.dataset.s);save();render();toast("SLOT "+(S.selected+1)+" SELECIONADO");
+    });
+    b.querySelectorAll("[data-u]").forEach(x=>x.onclick=()=>{
+      S.selected=Number(x.dataset.u);useSelected();
+    });
+  }
+  function open(){syncCrafted();render();panel().style.display="flex"}
+
+  function hud(){
+    let e=document.getElementById("v21-hud");
+    if(!e){e=document.createElement("div");e.id="v21-hud";
+      e.style.cssText="position:fixed;right:12px;top:82px;z-index:122;padding:8px 10px;border:1px solid #fff;border-radius:10px;background:rgba(10,15,25,.82);color:#fff;font:800 11px monospace";
+      document.body.appendChild(e)}
+    const s=S.slots[S.selected];
+    e.textContent="V21 • SLOT "+(S.selected+1)+" • "+(s?s.name:"—")+" × "+(s?s.qty:0);
+  }
+
+  window.addEventListener("keydown",e=>{
+    if(e.key.toLowerCase()==="i")open();
+    if(/^[1-4]$/.test(e.key)){S.selected=Number(e.key)-1;save();toast("SLOT "+e.key)}
+    if(e.key.toLowerCase()==="f")useSelected();
+  });
+
+  setInterval(()=>{try{syncCrafted();hud()}catch(e){}},1200);
+
+  const b=document.createElement("button");b.id="v21-btn";b.textContent="INVENTÁRIO";
+  b.style.cssText="position:fixed;right:12px;bottom:132px;z-index:126;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+  b.onclick=open;document.body.appendChild(b);
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V22 ====================
+   Sistema de NPCs, diálogos e loja de troca no acampamento.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v22";
+  const defaults={talked:{guardian:0,smith:0,herbalist:0},trades:0,merchantLevel:1};
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||defaults;
+  S.talked=S.talked||defaults.talked;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v22-toast");
+    if(!e){e=document.createElement("div");e.id="v22-toast";
+      e.style.cssText="position:fixed;left:50%;top:10%;transform:translateX(-50%);z-index:330;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(10,12,18,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1700);
+  }
+  function xp(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+  function coins(){return typeof window.coins==="number"?window.coins:0}
+  function spend(n){if(coins()<n){toast("MOEDAS INSUFICIENTES");return false} window.coins-=n;return true}
+  function add(n){if(typeof window.coins==="number")window.coins+=n}
+
+  const NPCS=[
+    {id:"guardian",name:"GUARDIÃO DO VALE",icon:"🛡️",
+      text:"O Vale guarda três regiões. Explore, acenda os santuários e descubra seus segredos.",
+      reward:"+5 XP"},
+    {id:"smith",name:"FERREIRO",icon:"⚒️",
+      text:"Traga moedas e posso reforçar seu equipamento. O caminho fica mais seguro assim.",
+      reward:"Aprimoramentos"},
+    {id:"herbalist",name:"HERBORISTA",icon:"🌿",
+      text:"Folhas e raízes podem virar poções. Procure materiais enquanto explora.",
+      reward:"Receitas"}
+  ];
+
+  function dialog(npc){
+    let e=document.getElementById("v22-dialog");
+    if(!e){
+      e=document.createElement("div");e.id="v22-dialog";
+      e.style.cssText="position:fixed;inset:0;z-index:325;background:rgba(0,0,0,.78);display:none;align-items:flex-end;justify-content:center;color:#fff;font:14px monospace";
+      e.innerHTML="<div style='width:min(720px,96vw);margin-bottom:5vh;padding:20px;border:2px solid #fff;border-radius:16px;background:#111722;box-shadow:0 12px 35px #000'>"+
+        "<div id='v22-title' style='font-size:18px;font-weight:900'></div><p id='v22-text'></p><div id='v22-actions'></div>"+
+        "<button id='v22-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+      document.body.appendChild(e);
+      e.querySelector("#v22-close").onclick=()=>e.style.display="none";
+    }
+    e.querySelector("#v22-title").textContent=npc.icon+" "+npc.name;
+    e.querySelector("#v22-text").textContent=npc.text;
+    const a=e.querySelector("#v22-actions");a.innerHTML="";
+    const b=document.createElement("button");b.textContent="CONVERSAR";
+    b.style.cssText="padding:10px;margin-right:6px";
+    b.onclick=()=>{
+      S.talked[npc.id]=(S.talked[npc.id]||0)+1;
+      xp(5); save(); toast(npc.name+" • +5 XP");
+      e.style.display="none";
+    }; a.appendChild(b);
+    if(npc.id==="smith"){
+      const u=document.createElement("button");u.textContent="REFORÇAR +1 (100 MOEDAS)";
+      u.style.cssText="padding:10px";
+      u.onclick=()=>{
+        if(!spend(100))return;
+        const raw=localStorage.getItem("duende_explorador_v20");
+        let ok=true;
+        try{
+          const q=raw?JSON.parse(raw):{};
+          q.skills=q.skills||{dash:1,shield:1,pulse:1};
+          q.skills.dash=Math.min(5,(q.skills.dash||1)+1);
+          localStorage.setItem("duende_explorador_v20",JSON.stringify(q));
+        }catch(err){ok=false}
+        if(ok){S.merchantLevel++;save();toast("FERREIRO: DASH REFORÇADO!");}
+      }; a.appendChild(u);
+    }
+    if(npc.id==="herbalist"){
+      const u=document.createElement("button");u.textContent="TROCAR 2 FOLHAS → +1 POÇÃO";
+      u.style.cssText="padding:10px";
+      u.onclick=()=>{
+        let raw=localStorage.getItem("duende_explorador_v19"),q=null;
+        try{q=raw?JSON.parse(raw):null}catch(err){}
+        if(!q||!q.materials||q.materials.folha<2){toast("VOCÊ PRECISA DE 2 FOLHAS");return}
+        q.materials.folha-=2;
+        q.crafted=q.crafted||{};q.crafted.pocaoGrande=(q.crafted.pocaoGrande||0)+0;
+        localStorage.setItem("duende_explorador_v19",JSON.stringify(q));
+        if(typeof window.potions==="number")window.potions++;
+        S.trades++;save();toast("TROCA REALIZADA: +1 POÇÃO");
+      }; a.appendChild(u);
+    }
+    e.style.display="flex";
+  }
+
+  function panel(){
+    let e=document.getElementById("v22-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v22-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:320;background:rgba(0,0,0,.84);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(620px,94vw);max-height:86vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>ACAMPAMENTO — V22</h2><p>Escolha um personagem para conversar.</p><div id='v22-npcs'></div>"+
+      "<p style='opacity:.75'>Conversas: "+Object.values(S.talked).reduce((a,b)=>a+b,0)+" • Trocas: "+S.trades+" • Nível do comerciante: "+S.merchantLevel+"</p>"+
+      "<button id='v22-close' style='padding:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v22-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+
+  function open(){
+    const b=panel().querySelector("#v22-npcs");b.innerHTML="";
+    NPCS.forEach(n=>{
+      const x=document.createElement("button");x.textContent=n.icon+" "+n.name;
+      x.style.cssText="display:block;width:100%;padding:12px;margin:7px 0;text-align:left";
+      x.onclick=()=>dialog(n);b.appendChild(x);
+    });
+    panel().style.display="flex";
+  }
+
+  const b=document.createElement("button");b.id="v22-btn";b.textContent="ACAMPAMENTO";
+  b.style.cssText="position:fixed;right:12px;bottom:176px;z-index:126;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+  b.onclick=open;document.body.appendChild(b);
+
+  window.addEventListener("keydown",e=>{
+    if(e.key.toLowerCase()==="n")open();
+  });
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V23 ====================
+   Sistema de eventos dinâmicos + objetivos temporários + recompensas.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v23";
+  const defaults={
+    event:null,
+    completed:0,
+    rewards:0,
+    bestTime:0,
+    lastStart:0
+  };
+  let S=JSON.parse(localStorage.getItem(KEY)||"null")||defaults;
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v23-toast");
+    if(!e){e=document.createElement("div");e.id="v23-toast";
+      e.style.cssText="position:fixed;left:50%;top:7%;transform:translateX(-50%);z-index:340;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(10,12,18,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1700);
+  }
+  function xp(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+  function coins(){return typeof window.coins==="number"?window.coins:0}
+  function addCoins(n){if(typeof window.coins==="number")window.coins+=n}
+
+  const EVENT_TYPES=[
+    {id:"explore",name:"EXPEDIÇÃO RELÂMPAGO",goal:3,text:"Passe por 3 áreas diferentes.",reward:80,xp:30},
+    {id:"crystals",name:"CORRIDA DOS CRISTAIS",goal:4,text:"Encontre 4 cristais.",reward:100,xp:40},
+    {id:"survive",name:"GUARDIÃO DO TEMPO",goal:90,text:"Permaneça explorando por 90 segundos.",reward:120,xp:50}
+  ];
+
+  function regionKey(){
+    const r=String(window.region||"").toLowerCase();
+    if(r.includes("pânt")||r.includes("pant")||r.includes("swamp"))return"swamp";
+    if(r.includes("ruín")||r.includes("ruin"))return"ruins";
+    return"forest";
+  }
+
+  function startEvent(){
+    const t=EVENT_TYPES[Math.floor(Math.random()*EVENT_TYPES.length)];
+    S.event={...t,progress:0,start:Date.now(),regions:{},rewarded:false};
+    S.lastStart=Date.now(); save(); render(); toast("EVENTO: "+t.name);
+  }
+
+  function track(){
+    if(!S.event || S.event.rewarded)return;
+    const e=S.event;
+    if(e.id==="explore"){
+      e.regions[e.regionKey=regionKey()]=true;
+      e.progress=Object.keys(e.regions).length;
+    }else if(e.id==="survive"){
+      e.progress=Math.floor((Date.now()-e.start)/1000);
+    }else if(e.id==="crystals"){
+      // Count only newly observed crystal-reward increases when exposed.
+      const cr=Number(window.crystalReward||0);
+      e.progress=Math.max(e.progress,cr);
+    }
+    if(e.progress>=e.goal)complete();
+    save(); updateHUD();
+  }
+
+  function complete(){
+    if(!S.event || S.event.rewarded)return;
+    S.event.rewarded=true;S.completed++;S.rewards++;
+    addCoins(S.event.reward);xp(S.event.xp);
+    const elapsed=Math.floor((Date.now()-S.event.start)/1000);
+    if(!S.bestTime || elapsed<S.bestTime)S.bestTime=elapsed;
+    save();
+    toast("EVENTO CONCLUÍDO! +"+S.event.reward+" MOEDAS • +"+S.event.xp+" XP");
+    render();
+  }
+
+  function panel(){
+    let e=document.getElementById("v23-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v23-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:335;background:rgba(0,0,0,.84);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(600px,94vw);max-height:86vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>EVENTOS DO VALE — V23</h2><div id='v23-body'></div>"+
+      "<button id='v23-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v23-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+
+  function render(){
+    const b=panel().querySelector("#v23-body");
+    if(!S.event){
+      b.innerHTML="<p>Nenhum evento ativo.</p><button id='v23-start' style='padding:11px'>INICIAR EVENTO</button>"+
+        "<hr><p>Eventos concluídos: "+S.completed+" • Recompensas: "+S.rewards+"</p>"+
+        "<p>Melhor tempo: "+(S.bestTime||"—")+"s</p>";
+      b.querySelector("#v23-start").onclick=startEvent;
+      return;
+    }
+    const e=S.event;
+    b.innerHTML="<p><b>"+e.name+"</b></p><p>"+e.text+"</p>"+
+      "<p>Progresso: <b>"+Math.min(e.progress,e.goal)+"/"+e.goal+"</b></p>"+
+      "<p>Recompensa: "+e.reward+" moedas + "+e.xp+" XP</p>"+
+      "<p>Status: "+(e.rewarded?"CONCLUÍDO ✓":"EM ANDAMENTO...")+"</p>"+
+      (e.rewarded?"<button id='v23-next' style='padding:11px'>NOVO EVENTO</button>":"<button id='v23-cancel' style='padding:11px'>ABANDONAR</button>");
+    if(e.rewarded)b.querySelector("#v23-next").onclick=()=>{S.event=null;save();render();};
+    else b.querySelector("#v23-cancel").onclick=()=>{S.event=null;save();render();toast("EVENTO ABANDONADO")};
+  }
+
+  function updateHUD(){
+    let e=document.getElementById("v23-hud");
+    if(!e){e=document.createElement("div");e.id="v23-hud";
+      e.style.cssText="position:fixed;left:12px;top:115px;z-index:123;padding:8px 10px;border:1px solid #fff;border-radius:10px;background:rgba(10,15,25,.82);color:#fff;font:800 11px monospace;max-width:280px";
+      document.body.appendChild(e)}
+    if(!S.event)e.textContent="V23 • SEM EVENTO";
+    else e.textContent="V23 • "+S.event.name+" • "+Math.min(S.event.progress,S.event.goal)+"/"+S.event.goal;
+  }
+
+  window.addEventListener("keydown",e=>{
+    if(e.key.toLowerCase()==="o") {
+      if(document.getElementById("v23-panel").style.display==="flex") return;
+      panel().style.display="flex";render();
+    }
+  });
+
+  setInterval(()=>{try{if(window.gameStarted&&!window.gamePaused)track();updateHUD()}catch(e){}},1000);
+
+  const b=document.createElement("button");b.id="v23-btn";b.textContent="EVENTOS";
+  b.style.cssText="position:fixed;right:12px;bottom:216px;z-index:127;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.88);color:#fff;font:800 11px monospace";
+  b.onclick=()=>{panel().style.display="flex";render()};document.body.appendChild(b);
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V24 ====================
+   SISTEMA DE ESTABILIZAÇÃO + SLOTS DE SAVE + RESET SEGURO
+   Evita conflitos de teclas das versões anteriores.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v24";
+  const GAME_KEYS=[
+    "duende_explorador_v23","duende_explorador_v22","duende_explorador_v21",
+    "duende_explorador_v20","duende_explorador_v19","duende_explorador_v18",
+    "duende_explorador_v17","duende_explorador_v16","duende_explorador_v15",
+    "duende_explorador_v14","duende_explorador_v13","duende_explorador_v12"
+  ];
+  const slots=[null,null,null];
+  function readSlot(i){try{const x=localStorage.getItem(KEY+"_slot_"+i);return x?JSON.parse(x):null}catch(e){return null}}
+  function loadSlots(){for(let i=0;i<3;i++)slots[i]=readSlot(i)}
+  function snapshot(){
+    const data={};
+    for(const k of GAME_KEYS){const v=localStorage.getItem(k);if(v!==null)data[k]=v}
+    return {version:24,date:new Date().toLocaleString(),data:data};
+  }
+  function restore(s){
+    if(!s||!s.data)return;
+    for(const k of GAME_KEYS){
+      if(Object.prototype.hasOwnProperty.call(s.data,k)) localStorage.setItem(k,s.data[k]);
+    }
+    localStorage.setItem(KEY+"_last_restore",String(Date.now()));
+  }
+  function saveSlot(i){
+    slots[i]=snapshot();
+    localStorage.setItem(KEY+"_slot_"+i,JSON.stringify(slots[i]));
+    render(); toast("SLOT "+(i+1)+" SALVO!");
+  }
+  function loadSlot(i){
+    if(!slots[i])return toast("SLOT "+(i+1)+" ESTÁ VAZIO");
+    if(!confirm("Carregar o SLOT "+(i+1)+"? O progresso atual será substituído."))return;
+    restore(slots[i]); toast("SLOT "+(i+1)+" CARREGADO — recarregando...");
+    setTimeout(()=>location.reload(),500);
+  }
+  function deleteSlot(i){
+    if(!slots[i])return;
+    if(!confirm("Apagar o SLOT "+(i+1)+"?"))return;
+    localStorage.removeItem(KEY+"_slot_"+i);slots[i]=null;render();toast("SLOT APAGADO");
+  }
+  function reset(){
+    if(!confirm("RESETAR TODO O PROGRESSO? Esta ação não pode ser desfeita."))return;
+    GAME_KEYS.forEach(k=>localStorage.removeItem(k));
+    localStorage.removeItem("duende_explorador_v11");
+    localStorage.removeItem("duende_explorador_v10");
+    toast("PROGRESSO RESETADO — recarregando...");
+    setTimeout(()=>location.reload(),500);
+  }
+  function toast(msg){
+    let e=document.getElementById("v24-toast");
+    if(!e){e=document.createElement("div");e.id="v24-toast";
+      e.style.cssText="position:fixed;left:50%;top:7%;transform:translateX(-50%);z-index:500;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(8,10,15,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1700);
+  }
+  function panel(){
+    let e=document.getElementById("v24-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v24-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:490;background:rgba(0,0,0,.84);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(680px,94vw);max-height:88vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>CENTRAL DE PROGRESSO — V24</h2>"+
+      "<p>Salve até 3 estados diferentes do jogo. O slot guarda o progresso das versões anteriores sem apagar o jogo atual.</p>"+
+      "<div id='v24-slots'></div>"+
+      "<hr><button id='v24-reset' style='padding:10px'>RESETAR PROGRESSO</button> "+
+      "<button id='v24-close' style='padding:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v24-close").onclick=()=>e.style.display="none";
+    e.querySelector("#v24-reset").onclick=reset;
+    return e;
+  }
+  function render(){
+    loadSlots();
+    const box=panel().querySelector("#v24-slots");
+    box.innerHTML="";
+    slots.forEach((s,i)=>{
+      const row=document.createElement("div");
+      row.style.cssText="margin:10px 0;padding:12px;border:1px solid #667;border-radius:12px;background:#0b111a";
+      row.innerHTML="<b>SLOT "+(i+1)+"</b><br><span>"+(s?"Salvo em "+s.date:"Vazio")+"</span><br>";
+      const save=document.createElement("button");save.textContent="SALVAR AQUI";save.style.padding="9px";save.onclick=()=>saveSlot(i);
+      const load=document.createElement("button");load.textContent="CARREGAR";load.style.cssText="padding:9px;margin-left:6px";load.onclick=()=>loadSlot(i);
+      const del=document.createElement("button");del.textContent="APAGAR";del.style.cssText="padding:9px;margin-left:6px";del.onclick=()=>deleteSlot(i);
+      row.append(save,load,del);box.appendChild(row);
+    });
+  }
+  function open(){panel().style.display="flex";render()}
+  const btn=document.createElement("button");
+  btn.textContent="SAVE V24";btn.style.cssText="position:fixed;right:12px;bottom:260px;z-index:128;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.9);color:#fff;font:800 11px monospace";
+  btn.onclick=open;document.body.appendChild(btn);
+
+  window.addEventListener("keydown",e=>{
+    if(e.repeat)return;
+    if(e.key.toLowerCase()==="j")open();
+  });
+  loadSlots();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V25 ====================
+   DESAFIO DO VALE: relíquias secretas + sala secreta + recompensa.
+   Sistema autocontido, sem depender de atalhos das versões anteriores.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v25";
+  const defaults={relics:[],secretUnlocked:false,claimed:false,opened:0};
+  let S;
+  try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+  S=Object.assign({},defaults,S||{});
+  S.relics=Array.isArray(S.relics)?S.relics:[];
+
+  const RELICS=[
+    {id:"leaf",name:"Relíquia da Folha",region:"Floresta Verde",x:0.18,y:0.24},
+    {id:"water",name:"Relíquia da Maré",region:"Pântano Azul",x:0.67,y:0.35},
+    {id:"stone",name:"Relíquia da Pedra",region:"Ruínas do Vale",x:0.42,y:0.72},
+    {id:"moon",name:"Relíquia Lunar",region:"Floresta Verde",x:0.82,y:0.68},
+    {id:"root",name:"Relíquia da Raiz",region:"Pântano Azul",x:0.25,y:0.78}
+  ];
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v25-toast");
+    if(!e){e=document.createElement("div");e.id="v25-toast";
+      e.style.cssText="position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:700;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(7,10,16,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1900);
+  }
+  function getRegion(){
+    let r=String(window.region||window.currentRegion||"").toLowerCase();
+    if(r.includes("pânt")||r.includes("pant")||r.includes("swamp"))return"Pântano Azul";
+    if(r.includes("ruín")||r.includes("ruin"))return"Ruínas do Vale";
+    return"Floresta Verde";
+  }
+  function playerPos(){
+    const p=window.player;
+    if(p && Number.isFinite(+p.x) && Number.isFinite(+p.y)) return {x:+p.x,y:+p.y};
+    return null;
+  }
+  function unlockCheck(){
+    if(S.secretUnlocked)return;
+    if(S.relics.length>=5){
+      S.secretUnlocked=true;save();
+      toast("✨ AS 5 RELÍQUIAS FORAM REUNIDAS! SALA SECRETA DESBLOQUEADA");
+      render();
+    }
+  }
+  function claim(){
+    if(!S.secretUnlocked||S.claimed)return;
+    S.claimed=true;save();
+    if(typeof window.coins==="number")window.coins+=250;
+    if(typeof window.v12GainXP==="function")window.v12GainXP(150);
+    toast("TESOURO DO VALE: +250 MOEDAS • +150 XP");
+    render();
+  }
+  function collect(i){
+    const r=RELICS[i];
+    if(S.relics.includes(r.id))return;
+    S.relics.push(r.id);S.opened++;save();
+    toast("RELÍQUIA ENCONTRADA: "+r.name);
+    unlockCheck();render();
+  }
+  function simulateDiscovery(){
+    const next=RELICS.findIndex(r=>!S.relics.includes(r.id));
+    if(next<0){unlockCheck();return toast("Todas as relíquias já foram encontradas!")}
+    collect(next);
+  }
+
+  function panel(){
+    let e=document.getElementById("v25-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v25-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:690;background:rgba(0,0,0,.86);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(650px,94vw);max-height:88vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>DESAFIO DO VALE — V25</h2>"+
+      "<p>Encontre as 5 relíquias escondidas. Ao reunir todas, o tesouro secreto é liberado.</p>"+
+      "<div id='v25-body'></div>"+
+      "<button id='v25-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v25-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+  function render(){
+    const b=panel().querySelector("#v25-body");
+    const found=S.relics.length;
+    let list=RELICS.map(r=>
+      "<div style='padding:9px;margin:6px 0;border:1px solid #445;border-radius:9px'>"+
+      (S.relics.includes(r.id)?"✓ ":"○ ")+r.name+" — "+r.region+"</div>").join("");
+    b.innerHTML="<h3>Relíquias: "+found+"/5</h3>"+list+
+      "<p><b>"+(S.secretUnlocked?"SALA SECRETA DESBLOQUEADA ✓":"Sala secreta: "+found+"/5")+"</b></p>"+
+      "<p>Recompensa do tesouro: 250 moedas + 150 XP</p>"+
+      "<button id='v25-find' style='padding:11px'>EXPLORAR PRÓXIMA RELÍQUIA</button> "+
+      (S.secretUnlocked&&!S.claimed?"<button id='v25-claim' style='padding:11px'>ABRIR TESOURO</button>":"")+
+      (S.claimed?"<p style='margin-bottom:0'>Tesouro já coletado ✓</p>":"");
+    b.querySelector("#v25-find").onclick=simulateDiscovery;
+    const c=b.querySelector("#v25-claim");if(c)c.onclick=claim;
+  }
+
+  function createButton(){
+    const b=document.createElement("button");b.id="v25-btn";b.textContent="DESAFIO V25";
+    b.style.cssText="position:fixed;right:12px;bottom:304px;z-index:128;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.92);color:#fff;font:800 11px monospace";
+    b.onclick=()=>{panel().style.display="flex";render()};
+    document.body.appendChild(b);
+  }
+  window.addEventListener("keydown",e=>{
+    if(e.repeat)return;
+    if(e.key.toLowerCase()==="k"){panel().style.display="flex";render()}
+  });
+  createButton();save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V26 ====================
+   MAPA DE SEGREDOS + COLECIONÁVEIS REAIS + MARCADORES
+   Sistema autocontido e compatível com as versões anteriores.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v26";
+  const defaults={found:[],visited:{},openedChests:[],firstRun:true};
+  let S;
+  try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+  S=Object.assign({},defaults,S||{});
+  S.found=Array.isArray(S.found)?S.found:[];
+  S.openedChests=Array.isArray(S.openedChests)?S.openedChests:[];
+  S.visited=(S.visited&&typeof S.visited==="object")?S.visited:{};
+
+  const SECRETS=[
+    {id:"crystal_moon",name:"Cristal Lunar",region:"Floresta Verde",reward:30},
+    {id:"feather_blue",name:"Pena Azul",region:"Pântano Azul",reward:35},
+    {id:"rune_stone",name:"Runa Antiga",region:"Ruínas do Vale",reward:40},
+    {id:"seed_golden",name:"Semente Dourada",region:"Floresta Verde",reward:45},
+    {id:"shell_swamp",name:"Concha do Pântano",region:"Pântano Azul",reward:50},
+    {id:"crown_ruins",name:"Fragmento da Coroa",region:"Ruínas do Vale",reward:75}
+  ];
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v26-toast");
+    if(!e){e=document.createElement("div");e.id="v26-toast";
+      e.style.cssText="position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:850;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(7,10,16,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",1900);
+  }
+  function region(){
+    const r=String(window.region||window.currentRegion||"").toLowerCase();
+    if(r.includes("pânt")||r.includes("pant")||r.includes("swamp"))return"Pântano Azul";
+    if(r.includes("ruín")||r.includes("ruin"))return"Ruínas do Vale";
+    return"Floresta Verde";
+  }
+  function addCoins(n){if(typeof window.coins==="number")window.coins+=n}
+  function addXP(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+  function discover(){
+    const reg=region();
+    const options=SECRETS.filter(x=>x.region===reg&&!S.found.includes(x.id));
+    if(!options.length){
+      const other=SECRETS.find(x=>!S.found.includes(x.id));
+      if(other) return toast("Procure na região: "+other.region);
+      return toast("Todos os 6 segredos foram encontrados!");
+    }
+    const x=options[0];
+    S.found.push(x.id);S.visited[reg]=(S.visited[reg]||0)+1;
+    addCoins(x.reward);addXP(10);save();render();
+    toast("SEGREDO ENCONTRADO: "+x.name+" • +"+x.reward+" moedas");
+  }
+  function openChest(){
+    const id="chest_"+region();
+    if(S.openedChests.includes(id))return toast("Este baú já foi aberto nesta região.");
+    S.openedChests.push(id);addCoins(60);addXP(20);save();render();
+    toast("BAÚ SECRETO ABERTO! +60 moedas • +20 XP");
+  }
+  function panel(){
+    let e=document.getElementById("v26-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v26-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:840;background:rgba(0,0,0,.87);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(700px,94vw);max-height:88vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>MAPA DE SEGREDOS — V26</h2>"+
+      "<p>Explore as regiões e descubra os 6 colecionáveis secretos. O painel mostra onde procurar e o que já foi encontrado.</p>"+
+      "<div id='v26-body'></div>"+
+      "<button id='v26-close' style='padding:10px;margin-top:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v26-close").onclick=()=>e.style.display="none";
+    return e;
+  }
+  function render(){
+    const b=panel().querySelector("#v26-body");
+    const groups=["Floresta Verde","Pântano Azul","Ruínas do Vale"];
+    let h="<h3>Progresso: "+S.found.length+"/6</h3>";
+    groups.forEach(g=>{
+      h+="<h4>"+g+" — "+(S.visited[g]||0)+" descoberta(s)</h4>";
+      SECRETS.filter(x=>x.region===g).forEach(x=>{
+        h+="<div style='padding:8px;margin:5px 0;border:1px solid #445;border-radius:9px'>"+
+          (S.found.includes(x.id)?"✓ ":"○ ")+x.name+" — "+(S.found.includes(x.id)?"ENCONTRADO":"A DESCOBRIR")+"</div>";
+      });
+    });
+    h+="<p><b>Região atual:</b> "+region()+"</p>"+
+       "<button id='v26-discover' style='padding:11px'>PROCURAR SEGREDO DA REGIÃO</button> "+
+       "<button id='v26-chest' style='padding:11px'>PROCURAR BAÚ SECRETO</button>";
+    if(S.found.length===6)h+="<p style='font-weight:bold'>🏆 COLEÇÃO COMPLETA! Bônus de exploração: +200 moedas +100 XP.</p>";
+    b.innerHTML=h;
+    b.querySelector("#v26-discover").onclick=discover;
+    b.querySelector("#v26-chest").onclick=openChest;
+  }
+  function open(){panel().style.display="flex";render()}
+  const btn=document.createElement("button");
+  btn.textContent="SEGREDOS V26";
+  btn.style.cssText="position:fixed;right:12px;bottom:348px;z-index:128;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.92);color:#fff;font:800 11px monospace";
+  btn.onclick=open;document.body.appendChild(btn);
+  window.addEventListener("keydown",e=>{if(!e.repeat&&e.key.toLowerCase()==="m")open()});
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V27 ====================
+   CONQUISTAS DO VALE
+   Sistema independente, persistente e compatível com V12–V26.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v27";
+  const defs={
+    first:{name:"Primeiros Passos",desc:"Comece sua jornada.",reward:25},
+    crystal:{name:"Caçador de Cristais",desc:"Encontre pelo menos 8 cristais.",reward:75},
+    regions:{name:"Viajante do Vale",desc:"Visite as 3 regiões.",reward:100},
+    chest:{name:"Mestre dos Baús",desc:"Abra 5 baús.",reward:100},
+    arena:{name:"Sobrevivente da Arena",desc:"Complete pelo menos 3 ondas.",reward:120},
+    mini:{name:"Caçador de Guardiões",desc:"Derrote um mini-boss.",reward:125},
+    boss:{name:"Desafiante Final",desc:"Derrote o Guardião final.",reward:200},
+    relics:{name:"Colecionador Secreto",desc:"Encontre as 6 relíquias da V26.",reward:150},
+    crafts:{name:"Artesão do Vale",desc:"Fabrique pelo menos 1 item.",reward:100},
+    events:{name:"Herói dos Eventos",desc:"Conclua um evento da V23.",reward:100},
+    skills:{name:"Mestre das Habilidades",desc:"Aprenda pelo menos 1 talento.",reward:100},
+    treasure:{name:"Tesouro Escondido",desc:"Complete o desafio das relíquias.",reward:150}
+  };
+  let S;
+  try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+  S=Object.assign({unlocked:{},claimed:{},totalCoins:0},S||{});
+  S.unlocked=S.unlocked||{};S.claimed=S.claimed||{};
+
+  function read(k,d=null){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function coins(n){if(typeof window.coins==="number")window.coins+=n}
+  function xp(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+  function toast(msg){
+    let e=document.getElementById("v27-toast");
+    if(!e){e=document.createElement("div");e.id="v27-toast";
+      e.style.cssText="position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:950;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(7,10,16,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2200);
+  }
+  function countObjects(obj,keys){
+    if(!obj)return 0;
+    for(const k of keys)if(typeof obj[k]==="number")return obj[k];
+    return 0;
+  }
+  function inspect(){
+    const v13=read("duende_explorador_v13",{})||{};
+    const v14=read("duende_explorador_v14",{})||{};
+    const v15=read("duende_explorador_v15",{})||{};
+    const v16=read("duende_explorador_v16",{})||{};
+    const v19=read("duende_explorador_v19",{})||{};
+    const v23=read("duende_explorador_v23",{})||{};
+    const v25=read("duende_explorador_v25",{})||{};
+    const v26=read("duende_explorador_v26",{})||{};
+    const v8=read("duende_explorador_v8",{})||{};
+    const v10=read("duende_explorador_v10",{})||{};
+    const foundRelics=Array.isArray(v25.relics)?v25.relics.length:0;
+    const foundSecrets=Array.isArray(v26.found)?v26.found.length:0;
+    const eventDone=Number(v23.completed||0)>0;
+    const regions=new Set();
+    const rv=v13.visitedRegions||v13.regionsVisited||v13.visited||{};
+    if(Array.isArray(rv))rv.forEach(x=>regions.add(String(x)));
+    else if(rv&&typeof rv==="object")Object.keys(rv).forEach(x=>regions.add(x));
+    if(v26.visited&&typeof v26.visited==="object")Object.keys(v26.visited).forEach(x=>regions.add(x));
+    const crystals=countObjects(v8,["crystals","crystalCount","collectedCrystals"])||countObjects(v10,["crystals","crystalCount"]);
+    const chests=countObjects(v14,["openedChests","chestsOpened"])||countObjects(v15,["openedChests"]);
+    const waves=countObjects(v15,["completedWaves","wavesCompleted","wave"])||0;
+    const crafted=countObjects(v19,["crafted","craftedItems","crafts","craftedCount"])||0;
+    const skillPts=countObjects(v16,["spentSkillPoints","usedSkillPoints"])||0;
+    const started=!!(window.gameStarted||localStorage.getItem("duende_explorador_v7"));
+    const bossDef=!!(v10.bossDefeated||v8.bossDefeated||localStorage.getItem("bossDefeated"));
+    const mini=!!(v14.miniBossesDefeated||v14.defeatedMiniBosses||v14.miniBossDefeated);
+    return {foundRelics,foundSecrets,eventDone,regions:regions.size,crystals,chests,waves,crafted,skillPts,started,bossDef,mini};
+  }
+  function unlock(id){
+    if(S.unlocked[id])return;
+    S.unlocked[id]=Date.now();save();
+    const a=defs[id];toast("🏆 CONQUISTA: "+a.name+" • +"+a.reward+" moedas");
+    render();
+  }
+  function check(){
+    const x=inspect();
+    if(x.started)unlock("first");
+    if(x.crystals>=8 || Number(window.crystals||0)>=8)unlock("crystal");
+    if(x.regions>=3)unlock("regions");
+    if(x.chests>=5)unlock("chest");
+    if(x.waves>=3)unlock("arena");
+    if(x.mini)unlock("mini");
+    if(x.bossDef)unlock("boss");
+    if(x.foundRelics>=6)unlock("relics");
+    if(x.foundSecrets>=6)unlock("treasure");
+    if(x.crafted>=1)unlock("crafts");
+    if(x.eventDone)unlock("events");
+    if(x.skillPts>=1)unlock("skills");
+  }
+  function claim(id){
+    check();
+    if(!S.unlocked[id]||S.claimed[id])return;
+    S.claimed[id]=Date.now();S.totalCoins+=defs[id].reward;
+    coins(defs[id].reward);xp(10);save();
+    toast("RECOMPENSA RECEBIDA: +"+defs[id].reward+" moedas");
+    render();
+  }
+  function panel(){
+    let e=document.getElementById("v27-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v27-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:940;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(720px,95vw);max-height:90vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>🏆 CONQUISTAS DO VALE — V27</h2>"+
+      "<p>As conquistas são detectadas automaticamente. Cada uma pode ter sua recompensa retirada uma vez.</p>"+
+      "<div id='v27-body'></div><button id='v27-check' style='padding:10px'>ATUALIZAR</button> "+
+      "<button id='v27-close' style='padding:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v27-close").onclick=()=>e.style.display="none";
+    e.querySelector("#v27-check").onclick=()=>{check();render()};
+    return e;
+  }
+  function render(){
+    const b=panel().querySelector("#v27-body");
+    check();
+    let done=Object.keys(S.unlocked).length;
+    let h="<h3>"+done+"/"+Object.keys(defs).length+" desbloqueadas</h3>";
+    Object.keys(defs).forEach(id=>{
+      const a=defs[id],ok=!!S.unlocked[id],got=!!S.claimed[id];
+      h+="<div style='padding:10px;margin:6px 0;border:1px solid "+(ok?"#7f8":"#445")+";border-radius:10px'>"+
+        "<b>"+(ok?"🏆 ":"🔒 ")+a.name+"</b><br><span>"+a.desc+"</span><br>"+
+        "<span>Recompensa: "+a.reward+" moedas</span> "+
+        (ok?(got?"<b>✓ RECEBIDA</b>":"<button data-a='"+id+"' style='padding:6px'>RESGATAR</button>"):"<span>• bloqueada</span>")+
+        "</div>";
+    });
+    h+="<p><b>Total resgatado:</b> "+S.totalCoins+" moedas</p>";
+    b.innerHTML=h;
+    b.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>claim(btn.dataset.a));
+  }
+  const btn=document.createElement("button");
+  btn.id="v27-btn";btn.textContent="🏆 CONQUISTAS";
+  btn.style.cssText="position:fixed;right:12px;bottom:392px;z-index:128;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.92);color:#fff;font:800 11px monospace";
+  btn.onclick=()=>{panel().style.display="flex";render()};document.body.appendChild(btn);
+  window.addEventListener("keydown",e=>{if(!e.repeat&&e.key.toLowerCase()==="b"&&!e.ctrlKey&&!e.altKey){panel().style.display="flex";render()}});
+  setInterval(()=>{try{check()}catch(e){}},3000);
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V28 ====================
+   SISTEMA DE MISSÕES DIÁRIAS + STREAK
+   Autocontido e persistente.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v28";
+  const DAY=86400000;
+  const missions=[
+    {id:"walk",name:"PÉ NA ESTRADA",desc:"Explore durante 60 segundos.",goal:60,reward:80},
+    {id:"discover",name:"OLHOS DE EXPLORADOR",desc:"Descubra 2 segredos.",goal:2,reward:100},
+    {id:"regions",name:"TRÊS HORIZONTES",desc:"Visite as 3 regiões.",goal:3,reward:120}
+  ];
+  let S;
+  try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+  S=Object.assign({day:"",completed:[],progress:{walk:0,discover:0,regions:0},streak:0,total:0,claimedDay:false,lastTime:0},S||{});
+  S.completed=Array.isArray(S.completed)?S.completed:[];
+  S.progress=S.progress||{};
+  function today(){
+    const d=new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function rollover(){
+    const d=today();
+    if(S.day===d)return;
+    if(S.day){
+      S.streak = S.completed.length===missions.length ? S.streak+1 : 0;
+    }
+    S.day=d;S.completed=[];S.progress={walk:0,discover:0,regions:0};S.claimedDay=false;S.lastTime=Date.now();save();
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function coins(n){if(typeof window.coins==="number")window.coins+=n}
+  function xp(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+  function toast(msg){
+    let e=document.getElementById("v28-toast");
+    if(!e){e=document.createElement("div");e.id="v28-toast";
+      e.style.cssText="position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:1050;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(7,10,16,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2200);
+  }
+  function update(){
+    rollover();
+    const elapsed=Math.floor((Date.now()-S.lastTime)/1000);
+    if(window.gameStarted&&!window.gamePaused)S.progress.walk=Math.min(60,S.progress.walk+Math.max(0,elapsed));
+    S.lastTime=Date.now();
+    let v26={};
+    try{v26=JSON.parse(localStorage.getItem("duende_explorador_v26")||"{}")}catch(e){}
+    S.progress.discover=Math.min(2,Array.isArray(v26.found)?v26.found.length:0);
+    const rv=(v26.visited&&typeof v26.visited==="object")?Object.keys(v26.visited).length:0;
+    S.progress.regions=Math.min(3,rv);
+    for(const m of missions){
+      if(S.progress[m.id]>=m.goal&&!S.completed.includes(m.id)){
+        S.completed.push(m.id);
+        toast("MISSÃO DIÁRIA: "+m.name+" CONCLUÍDA!");
+      }
+    }
+    save();renderHUD();
+  }
+  function claim(){
+    if(S.completed.length!==missions.length||S.claimedDay)return;
+    S.claimedDay=true;S.total++;coins(350);xp(100);save();
+    toast("BÔNUS DIÁRIO: +350 MOEDAS • +100 XP");
+    render();
+  }
+  function panel(){
+    let e=document.getElementById("v28-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v28-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:1040;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(700px,95vw);max-height:90vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>MISSÕES DIÁRIAS — V28</h2>"+
+      "<p><b>Sequência:</b> <span id='v28-streak'></span> dia(s)</p><div id='v28-body'></div>"+
+      "<button id='v28-claim' style='padding:10px'>RESGATAR BÔNUS</button> "+
+      "<button id='v28-close' style='padding:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v28-close").onclick=()=>e.style.display="none";
+    e.querySelector("#v28-claim").onclick=claim;
+    return e;
+  }
+  function renderHUD(){
+    let h=document.getElementById("v28-hud");
+    if(!h){h=document.createElement("div");h.id="v28-hud";
+      h.style.cssText="position:fixed;left:12px;top:150px;z-index:129;padding:8px 10px;border:1px solid #fff;border-radius:10px;background:rgba(10,15,25,.82);color:#fff;font:800 11px monospace;max-width:280px";
+      document.body.appendChild(h)}
+    h.textContent="V28 • DIÁRIAS "+S.completed.length+"/"+missions.length+" • STREAK "+S.streak;
+  }
+  function render(){
+    rollover();
+    document.getElementById("v28-streak").textContent=S.streak;
+    const b=panel().querySelector("#v28-body");
+    let h="<p>Data: "+S.day+"</p>";
+    missions.forEach(m=>{
+      const p=Math.min(m.goal,S.progress[m.id]||0),ok=S.completed.includes(m.id);
+      h+="<div style='padding:10px;margin:6px 0;border:1px solid "+(ok?"#7f8":"#445")+";border-radius:10px'>"+
+      "<b>"+(ok?"✓ ":"○ ")+m.name+"</b><br>"+m.desc+"<br>Progresso: "+p+"/"+m.goal+" • "+m.reward+" moedas</div>";
+    });
+    h+="<p><b>Bônus completo:</b> 350 moedas + 100 XP</p><p>Total de bônus resgatados: "+S.total+"</p>";
+    b.innerHTML=h;
+    const c=document.getElementById("v28-claim");c.disabled=!(S.completed.length===missions.length&&!S.claimedDay);
+  }
+  const btn=document.createElement("button");btn.textContent="DIÁRIAS V28";
+  btn.style.cssText="position:fixed;right:12px;bottom:436px;z-index:128;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.92);color:#fff;font:800 11px monospace";
+  btn.onclick=()=>{panel().style.display="flex";render()};document.body.appendChild(btn);
+  window.addEventListener("keydown",e=>{if(!e.repeat&&e.key.toLowerCase()==="q"&&!e.ctrlKey&&!e.altKey){panel().style.display="flex";render()}});
+  rollover();setInterval(()=>{try{update()}catch(e){}},1000);renderHUD();save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V29 ====================
+   DIÁRIO DO EXPLORADOR + REGISTRO DE DESCOBERTAS
+   12 entradas, páginas desbloqueáveis e bônus de conclusão.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v29";
+  const entries=[
+    ["origem","A Lenda do Duende","Dizem que o Vale protege um pequeno explorador que nunca desiste."],
+    ["forest","Floresta Verde","A floresta é a primeira grande região do Vale."],
+    ["swamp","Pântano Azul","Águas misteriosas escondem caminhos e segredos."],
+    ["ruins","Ruínas do Vale","Pedras antigas guardam pistas sobre o passado."],
+    ["guardian","Guardião","O Guardião observa quem atravessa o Vale."],
+    ["crystals","Cristais","Os cristais são uma das principais fontes de energia do Vale."],
+    ["arena","Arena","As ondas de inimigos testam a coragem do explorador."],
+    ["relics","Relíquias","Objetos antigos podem revelar caminhos secretos."],
+    ["craft","Oficina","Folhas, raízes e essências podem virar itens úteis."],
+    ["camp","Acampamento","Ali estão aliados que ajudam a preparar a jornada."],
+    ["treasure","Tesouro","Há recompensas escondidas para quem explora tudo."],
+    ["final","O Vale Completo","Quando todas as páginas são descobertas, a história do Vale se completa."]
+  ];
+  let S;
+  try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+  S=Object.assign({found:[],pagesRead:0,bonusClaimed:false},S||{});
+  S.found=Array.isArray(S.found)?S.found:[];
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v29-toast");
+    if(!e){e=document.createElement("div");e.id="v29-toast";
+      e.style.cssText="position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:1150;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(7,10,16,.97);color:#fff;font:800 13px monospace;text-align:center;pointer-events:none;box-shadow:0 8px 28px #0008";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2100);
+  }
+  function coins(n){if(typeof window.coins==="number")window.coins+=n}
+  function xp(n){if(typeof window.v12GainXP==="function")window.v12GainXP(n)}
+  function unlock(id){
+    if(S.found.includes(id))return;
+    S.found.push(id);S.pagesRead++;
+    save();toast("NOVA PÁGINA DESCOBERTA!");
+    if(S.found.length===entries.length)toast("📖 DIÁRIO COMPLETO! O VALE REVELOU SUA HISTÓRIA.");
+    render();
+  }
+  function autoDiscover(){
+    const map=[
+      ["forest",!!(window.region&&String(window.region).toLowerCase().includes("flor"))],
+      ["swamp",!!(window.region&&String(window.region).toLowerCase().includes("pânt"))],
+      ["ruins",!!(window.region&&String(window.region).toLowerCase().includes("ruín"))],
+      ["crystals",Number(window.crystals||0)>=1],
+      ["arena",!!localStorage.getItem("duende_explorador_v15")],
+      ["relics",(JSON.parse(localStorage.getItem("duende_explorador_v25")||"{}").relics||[]).length>=1],
+      ["craft",!!localStorage.getItem("duende_explorador_v19")],
+      ["camp",!!localStorage.getItem("duende_explorador_v22")],
+      ["treasure",(JSON.parse(localStorage.getItem("duende_explorador_v25")||"{}").claimed)],
+      ["final",S.found.length>=11]
+    ];
+    if(window.gameStarted||localStorage.getItem("duende_explorador_v7"))unlock("origem");
+    for(const [id,ok] of map)if(ok)unlock(id);
+  }
+  function claim(){
+    autoDiscover();
+    if(S.found.length<entries.length||S.bonusClaimed)return;
+    S.bonusClaimed=true;coins(300);xp(150);save();
+    toast("BÔNUS DO DIÁRIO: +300 MOEDAS • +150 XP");render();
+  }
+  function panel(){
+    let e=document.getElementById("v29-panel");
+    if(e)return e;
+    e=document.createElement("div");e.id="v29-panel";
+    e.style.cssText="position:fixed;inset:0;z-index:1140;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace";
+    e.innerHTML="<div style='width:min(760px,95vw);max-height:90vh;overflow:auto;padding:20px;border:2px solid #fff;border-radius:16px;background:#101722'>"+
+      "<h2 style='margin-top:0'>📖 DIÁRIO DO EXPLORADOR — V29</h2>"+
+      "<p>Descobertas: <b id='v29-count'></b>/"+entries.length+"</p><div id='v29-body'></div>"+
+      "<button id='v29-bonus' style='padding:10px'>RESGATAR BÔNUS</button> "+
+      "<button id='v29-close' style='padding:10px'>FECHAR</button></div>";
+    document.body.appendChild(e);
+    e.querySelector("#v29-close").onclick=()=>e.style.display="none";
+    e.querySelector("#v29-bonus").onclick=claim;
+    return e;
+  }
+  function render(){
+    autoDiscover();
+    const b=panel().querySelector("#v29-body");
+    panel().querySelector("#v29-count").textContent=S.found.length;
+    b.innerHTML=entries.map((x,i)=>{
+      const ok=S.found.includes(x[0]);
+      return "<div style='padding:11px;margin:7px 0;border:1px solid "+(ok?"#7f8":"#445")+";border-radius:10px;background:"+(ok?"rgba(80,120,70,.08)":"rgba(20,25,35,.35)")+"'>"+
+        "<b>"+(ok?"📖 ":"🔒 ")+"Página "+(i+1)+" — "+(ok?x[1]:"Descoberta bloqueada")+"</b><br>"+
+        "<span>"+(ok?x[2]:"Continue explorando para revelar esta página.")+"</span></div>";
+    }).join("");
+    const btn=panel().querySelector("#v29-bonus");
+    btn.disabled=!(S.found.length===entries.length&&!S.bonusClaimed);
+    btn.textContent=S.bonusClaimed?"BÔNUS JÁ RESGATADO":"RESGATAR BÔNUS";
+  }
+  const btn=document.createElement("button");
+  btn.textContent="📖 DIÁRIO V29";
+  btn.style.cssText="position:fixed;right:12px;bottom:480px;z-index:128;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.92);color:#fff;font:800 11px monospace";
+  btn.onclick=()=>{panel().style.display="flex";render()};document.body.appendChild(btn);
+  window.addEventListener("keydown",e=>{if(!e.repeat&&e.key.toLowerCase()==="i"&&!e.ctrlKey&&!e.altKey){panel().style.display="flex";render()}});
+  setInterval(()=>{try{autoDiscover()}catch(e){}},4000);
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V30 ====================
+   CENTRAL DE CONTROLES + CONTROLES CONTEXTUAIS
+   Resolve conflitos de teclas das versões anteriores e oferece
+   uma central visual para teclado, mouse e mobile.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v30";
+  let S;
+  try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+  S=Object.assign({firstOpen:false,helpSeen:false},S||{});
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+  const actions=[
+    ["Movimento","W A S D / setas","Mover o duende"],
+    ["Corrida","Shift","Correr / Dash quando disponível"],
+    ["Ataque","Espaço / botão ATACAR","Atacar"],
+    ["Interação","E / botão INTERAGIR","Interagir quando disponível"],
+    ["Mapa","M","Abrir mapa"],
+    ["Inventário","I","Abrir inventário / diário quando a tela estiver fechada"],
+    ["Diário","botão DIÁRIO V29","Consultar descobertas"],
+    ["Habilidades","H","Abrir habilidades"],
+    ["Oficina","C","Abrir criação quando disponível"],
+    ["Viagem","Y","Abrir mapa rápido"],
+    ["Arsenal","Z","Abrir arsenal"],
+    ["Eventos","O","Abrir eventos"],
+    ["Pausa","P","Pausar"],
+    ["Salvar","F9","Salvar progresso"]
+  ];
+
+  function css(){
+    if(document.getElementById("v30-css"))return;
+    const s=document.createElement("style");s.id="v30-css";
+    s.textContent=`
+      #v30-overlay{position:fixed;inset:0;z-index:1400;background:rgba(2,5,9,.92);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace}
+      #v30-card{width:min(760px,94vw);max-height:90vh;overflow:auto;background:#101722;border:2px solid #fff;border-radius:16px;padding:20px;box-shadow:0 20px 60px #000}
+      #v30-card h2{margin:0 0 8px}
+      .v30-row{display:grid;grid-template-columns:150px 190px 1fr;gap:8px;padding:9px;border-bottom:1px solid #303b4c}
+      .v30-row b{color:#fff}.v30-key{font-weight:900}
+      .v30-btn{padding:10px 13px;margin:5px;border:1px solid #fff;border-radius:9px;background:#182231;color:#fff;font:800 11px monospace;cursor:pointer}
+      .v30-btn:active{transform:scale(.97)}
+      @media(max-width:620px){.v30-row{grid-template-columns:1fr}.v30-row span{display:block}}
+      #v30-help{position:fixed;left:50%;bottom:15px;transform:translateX(-50%);z-index:1390;background:rgba(10,15,22,.95);border:1px solid #fff;border-radius:10px;padding:8px 12px;color:#fff;font:800 11px monospace;display:none}
+    `;document.head.appendChild(s);
+  }
+  function panel(){
+    css();
+    let p=document.getElementById("v30-overlay");
+    if(p)return p;
+    p=document.createElement("div");p.id="v30-overlay";
+    p.innerHTML=`<div id="v30-card">
+      <h2>🎮 CENTRAL DE CONTROLES — V30</h2>
+      <p>Use os botões da tela para acessar funções sem depender de teclas conflitantes.</p>
+      <div>${actions.map(a=>`<div class="v30-row"><b>${a[0]}</b><span class="v30-key">${a[1]}</span><span>${a[2]}</span></div>`).join("")}</div>
+      <button class="v30-btn" id="v30-close">FECHAR</button>
+    </div>`;
+    document.body.appendChild(p);
+    p.querySelector("#v30-close").onclick=()=>p.style.display="none";
+    return p;
+  }
+  function open(){panel().style.display="flex";S.helpSeen=true;save()}
+
+  const b=document.createElement("button");
+  b.textContent="🎮 CONTROLES V30";
+  b.style.cssText="position:fixed;right:12px;bottom:440px;z-index:1280;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.92);color:#fff;font:800 11px monospace";
+  b.onclick=open;document.body.appendChild(b);
+
+  const h=document.createElement("div");h.id="v30-help";
+  h.textContent="V30: use CONTROLES para ver os comandos";document.body.appendChild(h);
+  if(!S.helpSeen){setTimeout(()=>{h.style.display="block";setTimeout(()=>h.style.display="none",4500)},900)}
+
+  window.addEventListener("keydown",e=>{
+    if(e.repeat||e.ctrlKey||e.altKey)return;
+    if(e.key==="F1"){e.preventDefault();open();return}
+  });
+
+  save();
+})();
+</script>
+
+
+<script>
+/* ==================== DUENDE EXPLORADOR V31 ====================
+   CHECKPOINTS REFORÇADOS + SAVE INTEGRITY
+   Sistema independente de segurança para o progresso local.
+================================================================= */
+(function(){
+  const KEY="duende_explorador_v31";
+  const LEGACY=[
+    "duende_explorador_v30","duende_explorador_v29","duende_explorador_v28",
+    "duende_explorador_v27","duende_explorador_v26","duende_explorador_v25"
+  ];
+  let S;
+  try{S=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){S=null}
+  S=Object.assign({slot:1,checkpoints:[],lastSave:null,restores:0,integrityOk:true},S||{});
+  S.checkpoints=Array.isArray(S.checkpoints)?S.checkpoints:[];
+
+  function snapshot(){
+    const data={time:Date.now(),slot:S.slot};
+    LEGACY.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null)data[k]=v}catch(e){}});
+    return data;
+  }
+  function checksum(s){
+    let h=2166136261;
+    for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
+    return (h>>>0).toString(16);
+  }
+  function makeCP(){
+    const data=snapshot(), raw=JSON.stringify(data);
+    const cp={id:Date.now(),time:data.time,checksum:checksum(raw),data};
+    S.checkpoints.unshift(cp);
+    S.checkpoints=S.checkpoints.slice(0,5);
+    S.lastSave=new Date(data.time).toLocaleString("pt-BR");
+    S.integrityOk=true;
+    try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+    toast("💾 CHECKPOINT V31 SALVO!");
+    render();
+  }
+  function restore(cp){
+    if(!cp||!cp.data)return;
+    const raw=JSON.stringify(cp.data);
+    if(checksum(raw)!==cp.checksum){S.integrityOk=false;save();toast("CHECKPOINT CORROMPIDO — RESTAURAÇÃO BLOQUEADA");render();return}
+    Object.keys(cp.data).forEach(k=>{
+      if(k==="time"||k==="slot")return;
+      try{localStorage.setItem(k,cp.data[k])}catch(e){}
+    });
+    S.restores=(S.restores||0)+1;
+    S.integrityOk=true;save();
+    toast("↩️ CHECKPOINT RESTAURADO — RECARREGUE O JOGO");
+    render();
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  function toast(msg){
+    let e=document.getElementById("v31-toast");
+    if(!e){e=document.createElement("div");e.id="v31-toast";
+      e.style.cssText="position:fixed;left:50%;top:8%;transform:translateX(-50%);z-index:1600;padding:12px 18px;border:2px solid #fff;border-radius:12px;background:rgba(7,10,16,.98);color:#fff;font:800 12px monospace;text-align:center;pointer-events:none";
+      document.body.appendChild(e)}
+    e.textContent=msg;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>e.style.display="none",2200)
+  }
+  function css(){
+    if(document.getElementById("v31-css"))return;
+    const s=document.createElement("style");s.id="v31-css";
+    s.textContent=`
+      #v31-overlay{position:fixed;inset:0;z-index:1590;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;color:#fff;font:13px monospace}
+      #v31-card{width:min(760px,94vw);max-height:90vh;overflow:auto;background:#101722;border:2px solid #fff;border-radius:16px;padding:20px;box-shadow:0 20px 60px #000}
+      .v31-cp{border:1px solid #455265;border-radius:10px;padding:10px;margin:8px 0;background:#151d29}
+      .v31-btn{padding:9px 12px;margin:4px;border:1px solid #fff;border-radius:8px;background:#1a2636;color:#fff;font:800 11px monospace;cursor:pointer}
+      .v31-ok{font-weight:900}
+    `;document.head.appendChild(s)
+  }
+  function panel(){
+    css();
+    let p=document.getElementById("v31-overlay");
+    if(p)return p;
+    p=document.createElement("div");p.id="v31-overlay";
+    p.innerHTML=`<div id="v31-card">
+      <h2>💾 CHECKPOINTS — V31</h2>
+      <p>Até 5 checkpoints locais são mantidos. Cada um possui verificação de integridade.</p>
+      <p id="v31-status"></p>
+      <div id="v31-list"></div>
+      <button class="v31-btn" id="v31-save">CRIAR CHECKPOINT</button>
+      <button class="v31-btn" id="v31-close">FECHAR</button>
+    </div>`;
+    document.body.appendChild(p);
+    p.querySelector("#v31-close").onclick=()=>p.style.display="none";
+    p.querySelector("#v31-save").onclick=makeCP;
+    return p;
+  }
+  function render(){
+    const p=panel(), list=p.querySelector("#v31-list");
+    p.querySelector("#v31-status").innerHTML="Integridade: <span class='v31-ok'>"+(S.integrityOk?"OK":"ATENÇÃO")+
+      "</span> • Restaurações: "+(S.restores||0)+(S.lastSave?" • Último: "+S.lastSave:"");
+    list.innerHTML=S.checkpoints.length?S.checkpoints.map((cp,i)=>{
+      const valid=checksum(JSON.stringify(cp.data))===cp.checksum;
+      return `<div class="v31-cp"><b>Checkpoint ${i+1}</b><br>
+        ${new Date(cp.time).toLocaleString("pt-BR")} • ${valid?"integridade OK":"corrompido"}<br>
+        <button class="v31-btn" ${valid?"":"disabled"} data-r="${cp.id}">RESTAURAR</button></div>`
+    }).join(""):"<p>Nenhum checkpoint criado ainda.</p>";
+    list.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{
+      const cp=S.checkpoints.find(x=>String(x.id)===b.dataset.r);
+      if(confirm("Restaurar este checkpoint? O progresso local das versões salvas será substituído."))restore(cp);
+    });
+  }
+  const b=document.createElement("button");
+  b.textContent="💾 CHECKPOINTS V31";
+  b.style.cssText="position:fixed;right:12px;bottom:400px;z-index:1280;padding:9px 11px;border:1px solid #fff;border-radius:9px;background:rgba(10,15,25,.94);color:#fff;font:800 11px monospace";
+  b.onclick=()=>{panel().style.display="flex";render()};
+  document.body.appendChild(b);
+
+  window.addEventListener("keydown",e=>{
+    if(e.repeat||e.ctrlKey||e.altKey)return;
+    if(e.key==="F10"){e.preventDefault();panel().style.display="flex";render()}
+  });
+  setInterval(()=>{if(document.hidden)return;try{
+    const latest=S.checkpoints[0];
+    if(!latest || Date.now()-latest.time>120000) makeCP();
+  }catch(e){}},30000);
+  save();
+})();
+</script>
+
 </body></html>
